@@ -1,6 +1,6 @@
 {
-  "id": "slavhayrapetyan/armenian-mt-grabar-v1",
-  "title": "Armenian MT Ashkharabar to Grabar",
+  "id": "slavhayrapetyan/armenian-mt-train",
+  "title": "Armenian Mt Train",
   "code_file": "kaggle_train.ipynb",
   "language": "python",
   "kernel_type": "notebook",
@@ -14,5 +14,5 @@
   "model_data_sources": [],
   "category_ids": [],
   "tags": [],
-  "slug": "armenian-mt-grabar-v1"
+  "slug": "armenian-mt-train"
 }
