@@ -1,0 +1,18 @@
+{
+  "id": "slavhayrapetyan/armenian-mt-grabar-v1",
+  "title": "Armenian MT Ashkharabar to Grabar",
+  "code_file": "kaggle_train.ipynb",
+  "language": "python",
+  "kernel_type": "notebook",
+  "is_private": true,
+  "enable_gpu": true,
+  "enable_gpu_p100": false,
+  "enable_gpu_t4x2": true,
+  "enable_internet": true,
+  "dataset_data_sources": [],
+  "competition_data_sources": [],
+  "model_data_sources": [],
+  "category_ids": [],
+  "tags": [],
+  "slug": "armenian-mt-grabar-v1"
+}
