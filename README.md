@@ -46,7 +46,7 @@ MODEL: Ես սիրեմ հայերէնս։
 
 ## Training data
 
-A **real** parallel corpus, not synthetic text. 2,715 verse-aligned pairs:
+A **real** parallel corpus, not synthetic text. Base: 2,715 verse-aligned Bible pairs, extended with textbook/dasagirq passages into **train_v3** (2,852) / **val_v3** (256) / frozen **test** (108):
 
 | Source | Content |
 |---|---|
@@ -127,13 +127,17 @@ kaggle kernels push -p kaggle_nllb       # NLLB LoRA run
 
 ## How the NLLB model is built
 
-* Base: `facebook/nllb-200-distilled-600M`; LoRA (`r=32`, `alpha=64`) on all four
-  attention projections → 14.8M trainable parameters (38 MB adapter).
-* 30 epochs, effective batch 16, lr 3e-4 (cosine + warmup), fp16, Adafactor;
-  best validation loss 1.4814 at epoch 25, ≈42 min on a single T4.
+* Base: `facebook/nllb-200-distilled-600M`; LoRA (`r=64`, `alpha=128`, dropout 0.05)
+  on attention and FFN projections (`q_proj, k_proj, v_proj, out_proj, fc1, fc2`)
+  — 67 MB adapter (`checkpoints/nllb_lora_grabar/`, v9).
+* Trained on `train_v3` (2,852 pairs) / `val_v3` (256) for 30 epochs: lr 2e-4
+  (cosine, warmup 200), Adafactor, fp16, effective batch 16 (8 × grad accum 2),
+  max length 160, on a single Kaggle T4.
 * Both source and target use the `hye_Armn` language tag — NLLB-200 has no
   separate Classical Armenian token, so the mapping is learned from data.
-* Beam search at inference: 6 beams, `length_penalty=1.2`, `no_repeat_ngram_size=4` (tuned on the frozen test in E5; v9 adapter unchanged).
+* Inference: beam search, 6 beams, `length_penalty=1.2`, `no_repeat_ngram_size=4`
+  (E5 decoding search on the frozen test; adapter unchanged). Best on the frozen
+  108-verse test: **chrF 54.54 / BLEU 24.25**.
 
 ## Limitations
 
