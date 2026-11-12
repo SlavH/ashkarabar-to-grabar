@@ -15,7 +15,8 @@ Two models are included:
 |---|---|---|---|---|
 | Transformer trained from scratch | `checkpoints/armenian_mt.pt` | 62 MB | 30.6 | 9.1 |
 | NLLB-200 distilled-600M + LoRA (v2) | `checkpoints/nllb_lora_grabar/` (backup) | 37 MB adapter | 51.2 | 22.2 |
-| NLLB-200 distilled-600M + LoRA (v3) | `checkpoints/nllb_lora_grabar/` | 67 MB adapter | 51.8 | 21.6 |
+| NLLB-200 distilled-600M + LoRA (v3) | (backup) | 67 MB adapter | 51.8 | 21.6 |
+| NLLB-200 distilled-600M + LoRA (v9) | `checkpoints/nllb_lora_grabar/` | 67 MB adapter | 53.8 | 22.9 |
 
 Scores are on the same held-out set of 108 verse pairs (chrF/BLEU via
 `sacrebleu`, tokenized text, single reference). For a low-resource, morphologically
