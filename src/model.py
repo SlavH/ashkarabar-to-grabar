@@ -1,19 +1,32 @@
 # -*- coding: utf-8 -*-
 """
 model.py
-Encoder-Decoder Transformer с нуля для перевода ашхарабар → grabar.
-Исправленная версия — ключи совпадают с чекпоинтом, сохранённым на Kaggle.
+Transformer encoder-decoder (from scratch) for Modern Armenian -> Classical Armenian.
+
+The architecture is fully described by a config dict that is stored inside the
+checkpoint, so training (Kaggle) and inference (local) always agree.
 """
 
 import math
+
 import torch
 import torch.nn as nn
 
-
-PAD_IDX = 3
+# token ids produced by the tokenizer (special tokens are declared in this order)
+UNK_IDX = 0
 BOS_IDX = 1
 EOS_IDX = 2
-UNK_IDX = 0
+PAD_IDX = 3
+
+DEFAULT_CONFIG = dict(
+    d=384,
+    nhead=6,
+    layers=4,
+    ff=1024,
+    dropout=0.2,
+    max_len=160,
+    norm_first=True,
+)
 
 
 class PosEnc(nn.Module):
@@ -25,8 +38,7 @@ class PosEnc(nn.Module):
         div_term = torch.exp(torch.arange(0, d, 2).float() * (-math.log(10000.0) / d))
         pe[:, 0::2] = torch.sin(position * div_term)
         pe[:, 1::2] = torch.cos(position * div_term)
-        pe = pe.unsqueeze(0)
-        self.register_buffer("pe", pe)
+        self.register_buffer("pe", pe.unsqueeze(0))
 
     def forward(self, x):
         return self.dropout(x + self.pe[:, : x.size(1), :])
@@ -36,18 +48,33 @@ class TransMT(nn.Module):
     def __init__(
         self,
         vocab: int,
-        d: int = 256,
-        nhead: int = 8,
+        d: int = 384,
+        nhead: int = 6,
         layers: int = 4,
-        ff: int = 512,
-        dropout: float = 0.1,
+        ff: int = 1024,
+        dropout: float = 0.2,
+        max_len: int = 160,
+        norm_first: bool = True,
     ):
         super().__init__()
-        self.emb = nn.Embedding(vocab, d)
-        self.pe = PosEnc(d, dropout)
-        self.trans = nn.Transformer(d, nhead, layers, layers, ff, dropout, batch_first=True)
-        self.gen = nn.Linear(d, vocab)
+        self.vocab = vocab
         self.d = d
+        self.cfg = dict(d=d, nhead=nhead, layers=layers, ff=ff,
+                        dropout=dropout, max_len=max_len, norm_first=norm_first)
+
+        self.emb = nn.Embedding(vocab, d, padding_idx=PAD_IDX)
+        self.pe = PosEnc(d, dropout, max_len=max(max_len, 512))
+        self.trans = nn.Transformer(
+            d_model=d,
+            nhead=nhead,
+            num_encoder_layers=layers,
+            num_decoder_layers=layers,
+            dim_feedforward=ff,
+            dropout=dropout,
+            batch_first=True,
+            norm_first=norm_first,
+        )
+        self.gen = nn.Linear(d, vocab)
         self._init_weights()
 
     def _init_weights(self):
@@ -55,48 +82,48 @@ class TransMT(nn.Module):
             if p.dim() > 1:
                 nn.init.xavier_uniform_(p)
 
-    def forward(self, src, tgt):
-        s = self.pe(self.emb(src) * math.sqrt(self.d))
-        t = self.pe(self.emb(tgt) * math.sqrt(self.d))
-        out = self.trans(
-            s,
-            t,
+    @property
+    def config(self) -> dict:
+        return dict(self.cfg)
+
+    @classmethod
+    def from_config(cls, vocab: int, cfg: dict) -> "TransMT":
+        return cls(vocab=vocab, **(cfg or {}))
+
+    def encode(self, src):
+        return self.trans.encoder(
+            self.pe(self.emb(src) * math.sqrt(self.d)),
             src_key_padding_mask=(src == PAD_IDX),
-            tgt_mask=torch.tril(torch.ones(tgt.size(1), tgt.size(1))).bool().to(src.device),
+        )
+
+    def forward(self, src, tgt, memory=None):
+        if memory is None:
+            memory = self.encode(src)
+        T = tgt.size(1)
+        causal = torch.triu(torch.ones(T, T, device=tgt.device, dtype=torch.bool), diagonal=1)
+        out = self.trans.decoder(
+            self.pe(self.emb(tgt) * math.sqrt(self.d)),
+            memory,
+            tgt_mask=causal,
             tgt_key_padding_mask=(tgt == PAD_IDX),
             memory_key_padding_mask=(src == PAD_IDX),
         )
         return self.gen(out)
 
     @torch.no_grad()
-    def greedy_decode(self, src, max_len: int = 100, device: str = "cpu"):
+    def greedy_decode(self, src, max_len: int = 128, device: str = "cpu"):
+        """Greedy decoding for a single source sequence [1, S] -> token ids (with BOS)."""
         self.eval()
         src = src.to(device)
-        memory = self.trans.encoder(
-            self.pe(self.emb(src) * math.sqrt(self.d)),
-            src_key_padding_mask=(src == 2),
-        )
+        memory = self.encode(src)
         ys = torch.full((1, 1), BOS_IDX, dtype=torch.long, device=device)
 
         for _ in range(max_len - 1):
-            T = ys.size(1)
-            causal_mask = torch.tril(torch.ones(T, T, device=src.device)).bool()
-            ys_pad_mask = (ys == PAD_IDX)
-
-            out = self.trans.decoder(
-                self.pe(self.emb(ys) * math.sqrt(self.d)),
-                memory,
-                tgt_mask=causal_mask,
-                tgt_key_padding_mask=ys_pad_mask,
-                memory_key_padding_mask=(src == PAD_IDX),
-            )
-            logits = self.gen(out[:, -1])
-            next_token = logits.argmax(dim=-1).item()
+            logits = self.forward(src, ys, memory=memory)[:, -1]
+            nxt = int(logits.argmax(dim=-1).item())
             ys = torch.cat(
-                [ys, torch.full((1, 1), next_token, dtype=torch.long, device=device)],
-                dim=1,
+                [ys, torch.full((1, 1), nxt, dtype=torch.long, device=device)], dim=1
             )
-            if next_token == EOS_IDX:
+            if nxt == EOS_IDX:
                 break
-
         return ys[0]
