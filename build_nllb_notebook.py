@@ -22,15 +22,21 @@ Fine-tunes `facebook/nllb-200-distilled-600M` on **2,715 verse-aligned pairs**
 A LoRA adapter is exported (~10 MB) so the result fits in a Git repo; the base
 model is pulled from Hugging Face at inference time.
 
-Source lang `hye_Armn` (Modern Armenian) → target lang `hyw_Armn`
-(Western Armenian tag, whose orthography is closest to Grabar).
+Both source and target use the `hye_Armn` tag: NLLB-200 has no separate
+Western-Armenian or Classical-Armenian token, so the model learns the
+modern→grabar mapping from the data itself.
 """)
 
 code("""
 # Kaggle ships an old torchao that makes peft's dispatcher raise ImportError.
 !pip uninstall -y -q torchao
 !pip install -q transformers peft accelerate sacrebleu sentencepiece
-import os, json, random, time, urllib.request
+import os
+# one T4 keeps memory predictable (NLLB logits are 256k-wide) and avoids
+# DataParallel gather OOMs
+os.environ['CUDA_VISIBLE_DEVICES'] = '0'
+os.environ['PYTORCH_CUDA_ALLOC_CONF'] = 'expandable_segments:True'
+import json, random, time, urllib.request
 import torch
 from torch.utils.data import Dataset
 import transformers
@@ -43,7 +49,7 @@ print('cuda', torch.cuda.is_available(), torch.cuda.get_device_name(0) if torch.
 WORK = '/kaggle/working'
 RAW = 'https://raw.githubusercontent.com/SlavH/ashkarabar-to-grabar/main'
 os.makedirs(f'{WORK}/data', exist_ok=True)
-for rel in ['data/train_real.tsv', 'data/val_real.tsv']:
+for rel in ['data/train_real.tsv', 'data/val_real.tsv', 'data/test_real.tsv']:
     dest = os.path.join(WORK, rel)
     urllib.request.urlretrieve(f'{RAW}/{rel}', dest)
     print(rel, os.path.getsize(dest))
@@ -73,16 +79,17 @@ print('GRB:', train_pairs[0][1][:100])
 code("""
 MODEL_NAME = 'facebook/nllb-200-distilled-600M'
 SRC_LANG = 'hye_Armn'
-TGT_LANG = 'hyw_Armn'
-MAXLEN = 192
+TGT_LANG = 'hye_Armn'   # NLLB-200 has no hyw_Armn / grabar token
+MAXLEN = 144
 
 tok = AutoTokenizer.from_pretrained(MODEL_NAME, src_lang=SRC_LANG, tgt_lang=TGT_LANG)
 model = AutoModelForSeq2SeqLM.from_pretrained(MODEL_NAME)  # fp32 + AMP for stability
 
 from peft import LoraConfig, get_peft_model
 lora = LoraConfig(
-    r=16, lora_alpha=32, lora_dropout=0.05, bias='none',
-    target_modules=['q_proj', 'v_proj'], task_type='SEQ_2_SEQ_LM')
+    r=32, lora_alpha=64, lora_dropout=0.05, bias='none',
+    target_modules=['q_proj', 'k_proj', 'v_proj', 'out_proj'],
+    task_type='SEQ_2_SEQ_LM')
 model = get_peft_model(model, lora)
 model.print_trainable_parameters()
 print('params total %.1fM' % (sum(p.numel() for p in model.parameters()) / 1e6))
@@ -117,15 +124,15 @@ collator = DataCollatorForSeq2Seq(tokenizer=tok, model=model, label_pad_token_id
 
 BATCH = 8
 GRAD_ACC = 2
-EPOCHS = 12
+EPOCHS = 30
 
 base_kwargs = dict(
     output_dir=f'{WORK}/nllb_ckpt',
     per_device_train_batch_size=BATCH,
     per_device_eval_batch_size=BATCH,
     gradient_accumulation_steps=GRAD_ACC,
-    learning_rate=2e-4,
-    warmup_steps=50,
+    learning_rate=3e-4,
+    warmup_steps=100,
     num_train_epochs=EPOCHS,
     save_strategy='epoch',
     save_total_limit=2,
@@ -188,9 +195,12 @@ def translate(text, max_new=MAXLEN):
                          no_repeat_ngram_size=3, early_stopping=True)
     return tok.batch_decode(out, skip_special_tokens=True)[0].strip()
 
+test_pairs = read_pairs(f'{WORK}/data/test_real.tsv')
+print('test pairs', len(test_pairs))
+
 lines, preds, refs = [], [], []
 t0 = time.time()
-for i, (m, g) in enumerate(val_pairs[:60]):
+for i, (m, g) in enumerate(test_pairs):
     hyp = translate(m)
     preds.append(hyp); refs.append(g)
     block = f'ASH  : {m}\\nGOLD : {g}\\nMODEL: {hyp}\\n'
@@ -203,7 +213,7 @@ try:
     import sacrebleu
     chrf = sacrebleu.corpus_chrf(preds, [refs]).score
     bleu = sacrebleu.corpus_bleu(preds, [refs]).score
-    summary = f'chrF={chrf:.2f} BLEU={bleu:.2f} n={len(preds)}'
+    summary = f'chrF={chrf:.2f} BLEU={bleu:.2f} n={len(preds)} split=test'
 except Exception as e:
     summary = f'metric error {e}'
 print('METRICS', summary)

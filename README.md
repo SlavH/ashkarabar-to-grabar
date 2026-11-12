@@ -1,119 +1,142 @@
 # Armenian MT: Ashkharabar → Grabar
 
-<sup>[![Python](https://img.shields.io/badge/python-3.8+-blue.svg)](https://python.org)</sup>
+<sup>[![Python](https://img.shields.io/badge/python-3.10+-blue.svg)](https://python.org)</sup>
 <sup>[![PyTorch](https://img.shields.io/badge/pytorch-2.x-orange.svg)](https://pytorch.org)</sup>
-<sup>[![Kaggle](https://img.shields.io/badge/trained%20on-kaggle-blue.svg)](https://kaggle.com)</sup>
+<sup>[![Kaggle](https://img.shields.io/badge/trained%20on-kaggle%20T4-blue.svg)](https://kaggle.com)</sup>
 <sup>[![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)</sup>
 
-Neural machine translation model that translates from **Modern Armenian (āshkharabar)** to **Classical Armenian (grabar)** — an ancient literary language with very limited NLP resources.
+Neural machine translation from **Modern Armenian (աշխարհաբար, ashkharabar)** to
+**Classical Armenian (գրաբար, grabar)** — the literary language of the 5th–19th
+centuries, which has almost no parallel NLP resources.
 
----
+Two models are included:
 
-## What This Is
+| Model | Where | Size | chrF | BLEU |
+|---|---|---|---|---|
+| Transformer trained from scratch | `checkpoints/armenian_mt.pt` | 62 MB | 30.6 | 9.1 |
+| NLLB-200 distilled-600M + LoRA | `checkpoints/nllb_lora_grabar/` | 9.6 MB adapter | 36.5 | 7.7 |
 
-A **Transformer Encoder-Decoder** trained from scratch on PyTorch. Given a sentence in modern Armenian, it generates the classical (grabar) equivalent.
+Scores are on the same held-out set of 108 verse pairs (chrF/BLEU via
+`sacrebleu`, tokenized text, single reference). For a low-resource, morphologically
+rich target like grabar these numbers are a starting point, not a solved problem —
+see [Limitations](#limitations).
 
-**Current status:** Working prototype trained on ~1,000 sentence pairs. The model loads and runs inference — next step is more parallel data and longer training.
+## Example output
 
----
-
-## Project Structure
+Real held-out verses (not seen during training):
 
 ```
-armenian-mt-grabar/
+ASH  : Աստուած ստեղծեց երկինքն ու երկիրը։
+MODEL: Եւ արար Աստուած երկինքն եւ երկիր։
+
+ASH  : Համեմունքներից պատրաստուած խունկը դրեց դրա վրայ, ինչպէս Տէրն էր հրամայել Մովսէսին:
+GOLD : եւ արկ խունկ ի վերայ նորա ի խնկոցն հանդերձանաց, որպէս հրամայեա՛ց Տէր Մովսիսի.
+MODEL: Եւ եղեւ ի վերայ նորա խունկն համեմունքին, ինչպէս պատուիրեաց Տէր Մովսէս։
+
+ASH  : Արի գինի խմեցնենք մեր հօրը, պառկենք նրա հետ ու մեր հօրից զաւակ ունենանք»:
+GOLD : Եկ արբուսցուք հօր մերում գինի, եւ ննջեսցուք ընդ նմա, եւ յարուսցուք ի հօրէ մերմէ զաւակ։
+MODEL: Ա՛յլ գինին խմեցցե՛նք հօր մեր, եւ պառկեցե՛նք ընդ նմա, եւ ծնուցե՛նք զաւակ հայր մերոյ։
+```
+
+## Training data
+
+A **real** parallel corpus, not synthetic text. 2,715 verse-aligned pairs:
+
+| Source | Content |
+|---|---|
+| hy.wikisource «Աստուածաշունչ (1805)» | Zohrab's 1805 Grabar Bible, Genesis + Exodus, verse-tagged (`{{տուն}}` markers) |
+| HF `k-mktr/armenian_bible_hy` | Modern Eastern Armenian Bible (same translation tradition), verse IDs `Gen_1_1` … |
+
+Verses are matched by book/chapter/verse number, cleaned of wiki markup, filtered
+(min 25 chars, deduplicated) and split 2,390 train / 217 val / 108 test.
+
+`build_grabar_corpus.py` rebuilds the corpus end-to-end:
+
+```bash
+python3 build_grabar_corpus.py     # -> data/parallel_real.tsv + splits
+```
+
+## Project layout
+
+```
+.
+├── build_grabar_corpus.py        # regrabar corpus from hy.wikisource + modern Bible
+├── build_notebook.py             # regenerates the from-scratch Kaggle notebook
+├── build_nllb_notebook.py        # regenerates the NLLB Kaggle notebook
 ├── checkpoints/
-│   └── armenian_mt.pt          # Trained model weights (32.9 MB)
-├── data/
-│   ├── train.csv               # 1,000 training pairs
-│   ├── val.csv                 # 300 validation pairs
-│   └── raw_pairs.txt           # Raw parallel corpus (add your own data here)
-├── tokenizer/
-│   └── sp_model.json           # BPE tokenizer (4,000 tokens)
+│   ├── armenian_mt.pt            # from-scratch Transformer (best val epoch 20)
+│   └── nllb_lora_grabar/         # LoRA adapter for NLLB-200
+├── tokenizer/sp_model.json       # 2,400-token BPE used by the from-scratch model
+├── data/                         # train/val/test_real.tsv (modern \t grabar)
 ├── src/
-│   ├── model.py                # Transformer Encoder-Decoder (from scratch)
-│   ├── train.py                # Training loop with checkpointing
-│   ├── infer.py                # Single-sentence translation
-│   ├── prepare_data.py         # Data cleaning & split
-│   └── train_tokenizer.py      # BPE tokenizer training
-├── test_one.py                 # Translate one sentence
-├── test_batch.py               # Test on validation set
-├── eval_metrics.py             # chrF & BLEU scores
-├── kaggle_train.ipynb          # Kaggle GPU training notebook
-├── run_tests.bat               # Windows test runner
-├── run_on_D.bat                # Full training pipeline (Windows)
-└── README.md
+│   ├── model.py                  # TransMT: config-driven Transformer encoder-decoder
+│   ├── train.py                  # local training loop (GPU/CPU)
+│   └── infer.py                  # checkpoint loader + greedy decode
+├── test_one.py / test_batch.py   # quick inference
+├── eval_metrics.py               # chrF + BLEU on a held-out split
+├── translate_nllb.py             # NLLB + LoRA inference
+├── kaggle_train.ipynb            # from-scratch training (Kaggle T4)
+└── kaggle_nllb/nllb_train.ipynb  # NLLB LoRA fine-tuning (Kaggle T4)
 ```
 
----
+## Usage
 
-## Quick Start
-
-### Install dependencies
+### From-scratch Transformer (fast, CPU-friendly)
 
 ```bash
-pip install torch tokenizers sentencepiece tqdm
+pip install -r requirements.txt
+
+python3 test_one.py --text "Ես սիրում եմ հայերէնը։"
+python3 test_batch.py 10 test       # 10 held-out examples
+python3 eval_metrics.py test        # chrF / BLEU on the test split
 ```
 
-### Translate a sentence
+### NLLB-200 + LoRA (better quality, needs ~3 GB download)
 
 ```bash
-python test_one.py --text "Բարև, աշխարհ"
+python3 translate_nllb.py --text "Աստուած ստեղծեց երկինքն ու երկիրը։"
 ```
 
-### Batch test on validation set
+The adapter is in `checkpoints/nllb_lora_grabar/`; the 600M base model
+(`facebook/nllb-200-distilled-600M`) is pulled from Hugging Face on first run.
+
+### Training on Kaggle
+
+Both notebooks run on a free T4:
 
 ```bash
-python test_batch.py 20
+kaggle kernels push -p .                 # from-scratch run
+kaggle kernels push -p kaggle_nllb       # NLLB LoRA run
 ```
 
-### Evaluate with chrF & BLEU
+## How the from-scratch model is built
 
-```bash
-pip install sacrebleu
-python eval_metrics.py
-```
+* 15.3M-parameter Transformer encoder–decoder (`d=384`, 6 heads, 4+4 layers,
+  `norm_first`, dropout 0.2), 2,400-token byte-level BPE.
+* Bidirectional loss: `0.5 × (ASH→GRB + GRB→ASH)`, label smoothing 0.1,
+  OneCycle LR, gradient clipping, best-validation checkpointing.
+* 200 epochs on 2,390 pairs (≈51 min on a T4). Best validation loss 4.1692 at
+  epoch 20; later epochs overfit (train loss 1.27), which is expected with a
+  corpus this small.
 
-### Train more (locally)
+## Limitations
 
-```bash
-python src\train.py
-```
+* **Domain:** only Genesis and Exodus exist as verse-aligned Grabar/modern pairs
+  on Wikisource. The model therefore learned biblical register and vocabulary;
+  modern conversational input often gets a biblical-sounding paraphrase.
+* **Size:** ~2.7k pairs is far below what a translation model normally needs.
+  Both models memorise phrasing patterns more than they generalise.
+* **Evaluation:** one reference per verse; chrF/BLEU reward surface overlap, not
+  theological accuracy.
+* **Orthography:** training text uses classical orthography (եաւ, յ, զ-), so the
+  output keeps it; modern reform spelling input is still understood.
 
-### Train on Kaggle GPU (recommended for speed)
+## Data attribution
 
-Upload `kaggle_train.ipynb` to [kaggle.com/code](https://kaggle.com/code), enable GPU (T4 x2), run all cells, and download the checkpoint.
+* Grabar text: *Աստուածաշունչ* (Zohrab, 1805), transcribed on hy.wikisource
+  (CC BY-SA).
+* Modern Armenian text: `k-mktr/armenian_bible_hy` on Hugging Face.
+* Base model: `facebook/nllb-200-distilled-600M` (CC BY-NC 4.0), used through a
+  LoRA adapter — check that licence before commercial use.
 
----
-
-## Why This Matters
-
-Classical Armenian (**grabar**) has a rich literary heritage but very few NLP resources. This project is a step toward making it accessible to modern NLP pipelines — translation, search, and digital preservation.
-
----
-
-## Roadmap
-
-- [ ] Collect larger parallel corpus (Bible, historical texts)
-- [ ] Train longer epochs on Kaggle T4 GPU
-- [ ] Improve BLEU/chrF scores
-- [ ] Deploy as a simple web demo
-
----
-
-## Example
-
-```bash
-$ python test_one.py --text "Բարև, աշխարհ"
-Input  (ASH): Բարև, աշխարհ
-Output (GRB): Պարով, աշխարհ
-```
-
----
-
-## License
-
-[MIT](LICENSE)
-
----
-
-**Kaggle notebook:** [`slavhayrapetyan/armenian-mt-ashkharabar-to-grabar`](https://www.kaggle.com/code/slavhayrapetyan/armenian-mt-ashkharabar-to-grabar)
+Code: MIT.

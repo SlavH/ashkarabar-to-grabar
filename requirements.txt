@@ -1,0 +1,8 @@
+torch>=2.0
+tokenizers>=0.15
+transformers>=4.40
+peft>=0.10
+sentencepiece>=0.1.99
+sacrebleu>=2.4
+pandas>=2.0
+pyarrow>=14.0

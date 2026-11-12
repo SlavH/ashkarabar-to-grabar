@@ -21,7 +21,7 @@ ADAPTER_DIR = BASE / "checkpoints" / "nllb_lora_grabar"
 
 MODEL_NAME = "facebook/nllb-200-distilled-600M"
 SRC_LANG = "hye_Armn"   # Modern Armenian
-TGT_LANG = "hyw_Armn"   # Western Armenian tag: closest orthography to grabar
+TGT_LANG = "hye_Armn"   # NLLB-200 has no separate grabar / hyw tag
 MAX_LEN = 192
 
 
