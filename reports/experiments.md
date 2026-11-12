@@ -16,3 +16,4 @@ Baseline (adopted): **v9** — chrF 53.84 / BLEU 22.86, n=108 test (frozen). Con
 - **Conclusion:** no new reliable parallel data identified in this pass. Proceeding with modeling experiments on v3 data.
 | E2-v11 | regularization | 24 epochs, lora_dropout 0.1 | v3 | 53.53 / 23.35 | rejected (chrF < v9) |
 | E3-v12 | lr/warmup | lr 1e-4, warmup 300, 30 epochs, dropout 0.05 | v3 | 51.09 / 20.53 | rejected (too slow LR) |
+| E4-v13 | smaller LoRA | r=32 alpha=64, 30 epochs, lr 2e-4 | v3 | running | - |
