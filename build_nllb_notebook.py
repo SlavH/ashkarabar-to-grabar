@@ -14,17 +14,23 @@ def code(src):
                   "outputs": [], "source": src.strip("\n").splitlines(keepends=True)})
 
 
-md("""# Ashkharabar → Grabar: NLLB-200 fine-tune (LoRA)
+md("""# Ashkharabar → Grabar: NLLB-200 fine-tune (LoRA), v3
 
-Fine-tunes `facebook/nllb-200-distilled-600M` on **2,715 verse-aligned pairs**
-(Zohrab 1805 Grabar Bible ↔ modern Eastern Armenian Bible).
+Fine-tunes `facebook/nllb-200-distilled-600M` on the expanded corpus:
+verse-aligned Zohrab 1805 Grabar Bible (Genesis, Exodus) plus the bilingual
+passages of Abeghyan's 1916 «Գրաբարի դասագիրք» (gospel lections and the
+1916 Modern Armenian translations of the same passages) — real human
+translations, not synthetic pairs.
+
+The held-out test split is the same 108 Bible verses as v2, so the reported
+chrF/BLEU stay directly comparable.
 
 A LoRA adapter is exported (~10 MB) so the result fits in a Git repo; the base
 model is pulled from Hugging Face at inference time.
 
 Both source and target use the `hye_Armn` tag: NLLB-200 has no separate
-Western-Armenian or Classical-Armenian token, so the model learns the
-modern→grabar mapping from the data itself.
+Classical-Armenian token, so the model learns the modern→grabar mapping from
+the data itself.
 """)
 
 code("""
@@ -49,7 +55,7 @@ print('cuda', torch.cuda.is_available(), torch.cuda.get_device_name(0) if torch.
 WORK = '/kaggle/working'
 RAW = 'https://raw.githubusercontent.com/SlavH/ashkarabar-to-grabar/main'
 os.makedirs(f'{WORK}/data', exist_ok=True)
-for rel in ['data/train_real.tsv', 'data/val_real.tsv', 'data/test_real.tsv']:
+for rel in ['data/train_v3.tsv', 'data/val_v3.tsv', 'data/test_real.tsv']:
     dest = os.path.join(WORK, rel)
     urllib.request.urlretrieve(f'{RAW}/{rel}', dest)
     print(rel, os.path.getsize(dest))
@@ -69,8 +75,8 @@ def read_pairs(path):
                 out.append((a, b))
     return out
 
-train_pairs = read_pairs(f'{WORK}/data/train_real.tsv')
-val_pairs = read_pairs(f'{WORK}/data/val_real.tsv')
+train_pairs = read_pairs(f'{WORK}/data/train_v3.tsv')
+val_pairs = read_pairs(f'{WORK}/data/val_v3.tsv')
 print('train', len(train_pairs), 'val', len(val_pairs))
 print('ASH:', train_pairs[0][0][:100])
 print('GRB:', train_pairs[0][1][:100])
@@ -80,15 +86,15 @@ code("""
 MODEL_NAME = 'facebook/nllb-200-distilled-600M'
 SRC_LANG = 'hye_Armn'
 TGT_LANG = 'hye_Armn'   # NLLB-200 has no hyw_Armn / grabar token
-MAXLEN = 144
+MAXLEN = 160
 
 tok = AutoTokenizer.from_pretrained(MODEL_NAME, src_lang=SRC_LANG, tgt_lang=TGT_LANG)
 model = AutoModelForSeq2SeqLM.from_pretrained(MODEL_NAME)  # fp32 + AMP for stability
 
 from peft import LoraConfig, get_peft_model
 lora = LoraConfig(
-    r=32, lora_alpha=64, lora_dropout=0.05, bias='none',
-    target_modules=['q_proj', 'k_proj', 'v_proj', 'out_proj'],
+    r=64, lora_alpha=128, lora_dropout=0.05, bias='none',
+    target_modules=['q_proj', 'k_proj', 'v_proj', 'out_proj', 'fc1', 'fc2'],
     task_type='SEQ_2_SEQ_LM')
 model = get_peft_model(model, lora)
 model.print_trainable_parameters()
@@ -124,15 +130,16 @@ collator = DataCollatorForSeq2Seq(tokenizer=tok, model=model, label_pad_token_id
 
 BATCH = 8
 GRAD_ACC = 2
-EPOCHS = 30
+EPOCHS = 16
 
 base_kwargs = dict(
     output_dir=f'{WORK}/nllb_ckpt',
     per_device_train_batch_size=BATCH,
     per_device_eval_batch_size=BATCH,
     gradient_accumulation_steps=GRAD_ACC,
-    learning_rate=3e-4,
-    warmup_steps=100,
+    learning_rate=2e-4,
+    warmup_steps=200,
+    lr_scheduler_type='cosine',
     num_train_epochs=EPOCHS,
     save_strategy='epoch',
     save_total_limit=2,
