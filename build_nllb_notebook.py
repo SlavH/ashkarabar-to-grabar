@@ -207,6 +207,7 @@ test_pairs = read_pairs(f'{WORK}/data/test_real.tsv')
 print('test pairs', len(test_pairs))
 
 # quick decoding search over a few configs
+import sacrebleu
 best = None
 for (nb, lp) in [(4, 1.0), (5, 1.0), (4, 1.1), (5, 1.1)]:
     preds, refs = [], []
