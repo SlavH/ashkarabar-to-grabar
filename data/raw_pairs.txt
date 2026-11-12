@@ -1,4 +1,0 @@
-Բարև,-light.
-yes	yes
-no	no
-hello	hello
