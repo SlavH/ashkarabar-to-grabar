@@ -14,4 +14,4 @@ Baseline (adopted): **v9** — chrF 53.84 / BLEU 22.86, n=108 test (frozen). Con
 - `Գրաբարի դասագիրք` subpages: 45 pages total; correspond to already-fetched numbered pages / alternate titles, no new bilingual pairs found.
 - HF datasets checked: `catherinearnett/classical_armenian` (Grabar Zohrab, non-parallel/PD mix), `catherinearnett/classical_armenian_pd` (19th-c modern lit, mislabeled), `nomikos-project/armenian-manuscript-htr` (HTR images) — no usable parallel modern↔grabar text.
 - **Conclusion:** no new reliable parallel data identified in this pass. Proceeding with modeling experiments on v3 data.
-| E2-v11 | regularization | 24 epochs, lora_dropout 0.1 | v3 | running | - |
+| E2-v11 | regularization | 24 epochs, lora_dropout 0.1 | v3 | 53.53 / 23.35 | rejected (chrF < v9) |
