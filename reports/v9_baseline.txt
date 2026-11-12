@@ -1,0 +1,1 @@
+chrF=53.84 BLEU=22.86 n=108 split=test v9

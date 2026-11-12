@@ -35,7 +35,7 @@ print('cuda', torch.cuda.is_available(), torch.cuda.get_device_name(0) if torch.
 WORK = '/kaggle/working'
 RAW = 'https://raw.githubusercontent.com/SlavH/ashkarabar-to-grabar/main'
 os.makedirs(f'{WORK}/data', exist_ok=True)
-for rel in ['data/train_v3.tsv', 'data/val_v3.tsv', 'data/test_real.tsv']:
+for rel in ['data/train_v3_aug.tsv', 'data/val_v3.tsv', 'data/test_real.tsv']:
     dest = os.path.join(WORK, rel)
     urllib.request.urlretrieve(f'{RAW}/{rel}', dest)
     print(rel, os.path.getsize(dest))
@@ -55,7 +55,7 @@ def read_pairs(path):
                 out.append((a, b))
     return out
 
-train_pairs = read_pairs(f'{WORK}/data/train_v3.tsv')
+train_pairs = read_pairs(f'{WORK}/data/train_v3_aug.tsv')
 val_pairs = read_pairs(f'{WORK}/data/val_v3.tsv')
 print('train', len(train_pairs), 'val', len(val_pairs))
 """)
