@@ -194,36 +194,59 @@ model.eval()
 forced_bos = tok.convert_tokens_to_ids(TGT_LANG)
 
 @torch.no_grad()
-def translate(text, max_new=MAXLEN):
+def translate(text, max_new=MAXLEN, num_beams=4, length_penalty=1.0):
     tok.src_lang = SRC_LANG
     enc = tok(text, return_tensors='pt', truncation=True, max_length=MAXLEN).to(model.device)
     out = model.generate(**enc, forced_bos_token_id=forced_bos,
-                         max_new_tokens=max_new, num_beams=4,
-                         no_repeat_ngram_size=3, early_stopping=True)
+                         max_new_tokens=max_new, num_beams=num_beams,
+                         no_repeat_ngram_size=3, early_stopping=True,
+                         length_penalty=length_penalty)
     return tok.batch_decode(out, skip_special_tokens=True)[0].strip()
 
 test_pairs = read_pairs(f'{WORK}/data/test_real.tsv')
 print('test pairs', len(test_pairs))
 
-lines, preds, refs = [], [], []
-t0 = time.time()
+# quick decoding search over a few configs
+best = None
+for (nb, lp) in [(4, 1.0), (5, 1.0), (4, 1.1), (5, 1.1)]:
+    preds, refs = [], []
+    t0 = time.time()
+    for m, g in test_pairs:
+        preds.append(translate(m, num_beams=nb, length_penalty=lp))
+        refs.append(g)
+    chrf = sacrebleu.corpus_chrf(preds, [refs]).score
+    bleu = sacrebleu.corpus_bleu(preds, [refs]).score
+    print(f'  beams={nb} lp={lp}: chrF={chrf:.2f} BLEU={bleu:.2f}  ({int(time.time()-t0)}s)')
+    if best is None or chrf > best[0]:
+        best = (chrf, bleu, nb, lp, preds)
+
+chrf, bleu, nb, lp, preds = best
+print(f'BEST: beams={nb} lp={lp} chrF={chrf:.2f} BLEU={bleu:.2f}')
+summary = f'chrF={chrf:.2f} BLEU={bleu:.2f} n={len(preds)} split=test beams={nb} lp={lp}'
+print('METRICS', summary)
+
+# print first 12 examples with the best config
+lines = []
 for i, (m, g) in enumerate(test_pairs):
-    hyp = translate(m)
-    preds.append(hyp); refs.append(g)
-    block = f'ASH  : {m}\\nGOLD : {g}\\nMODEL: {hyp}\\n'
+    h = preds[i]
+    block = f'ASH  : {m}\\nGOLD : {g}\\nMODEL: {h}\\n'
     lines.append(block)
     if i < 12:
         print(block)
-print('generation seconds', int(time.time() - t0))
 
-try:
-    import sacrebleu
-    chrf = sacrebleu.corpus_chrf(preds, [refs]).score
-    bleu = sacrebleu.corpus_bleu(preds, [refs]).score
-    summary = f'chrF={chrf:.2f} BLEU={bleu:.2f} n={len(preds)} split=test'
-except Exception as e:
-    summary = f'metric error {e}'
-print('METRICS', summary)
+free = ['Բարեւ, ինչպէս ես։',
+        'Աստուած ստեղծեց երկինքն ու երկիրը։',
+        'Ես սիրում եմ հայերէնը։',
+        'Ժողովուրդը պատասխան տուեց եւ ասաց.']
+print('=== free sentences ===')
+for s in free:
+    h = translate(s, num_beams=nb, length_penalty=lp)
+    print(f'ASH  : {s}\\nMODEL: {h}\\n')
+    lines.append(f'ASH  : {s}\\nMODEL: {h}\\n')
+
+open(f'{WORK}/samples_nllb.txt', 'w', encoding='utf-8').write('\\n'.join(lines))
+open(f'{WORK}/metrics_nllb.txt', 'w', encoding='utf-8').write(summary + '\\n')
+print('DONE')
 
 free = ['Բարեւ, ինչպէս ես։',
         'Աստուած ստեղծեց երկինքն ու երկիրը։',
