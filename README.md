@@ -14,7 +14,8 @@ Two models are included:
 | Model | Where | Size | chrF | BLEU |
 |---|---|---|---|---|
 | Transformer trained from scratch | `checkpoints/armenian_mt.pt` | 62 MB | 30.6 | 9.1 |
-| NLLB-200 distilled-600M + LoRA | `checkpoints/nllb_lora_grabar/` | 38 MB adapter | 51.2 | 22.2 |
+| NLLB-200 distilled-600M + LoRA (v2) | `checkpoints/nllb_lora_grabar/` (backup) | 37 MB adapter | 51.2 | 22.2 |
+| NLLB-200 distilled-600M + LoRA (v3) | `checkpoints/nllb_lora_grabar/` | 67 MB adapter | 51.8 | 21.6 |
 
 Scores are on the same held-out set of 108 verse pairs (chrF/BLEU via
 `sacrebleu`, tokenized text, single reference). For a low-resource, morphologically
@@ -135,10 +136,13 @@ kaggle kernels push -p kaggle_nllb       # NLLB LoRA run
 
 ## Limitations
 
-* **Domain:** only Genesis and Exodus exist as verse-aligned Grabar/modern pairs
-  on Wikisource. The model therefore learned biblical register and vocabulary;
-  modern conversational input often gets a biblical-sounding paraphrase.
-* **Size:** ~2.7k pairs is far below what a translation model normally needs.
+* **Domain:** training data is still biblical (Genesis, Exodus, plus the gospel
+  lections and psalms in Abeghyan's 1916 «Գրաբարի դասագիրք»). The model
+  learned biblical register and vocabulary; modern conversational input often
+  gets a biblical-sounding paraphrase. Psalms and Daniel lections could not be
+  used because the modern Bible dataset only contains Genesis, Exodus, Matthew,
+  Mark, Luke and John; Ełišē's history is a red link on Wikisource.
+* **Size:** ~3.4k pairs is far below what a translation model normally needs.
   Both models memorise phrasing patterns more than they generalise.
 * **Evaluation:** one reference per verse; chrF/BLEU reward surface overlap, not
   theological accuracy.
@@ -148,7 +152,8 @@ kaggle kernels push -p kaggle_nllb       # NLLB LoRA run
 ## Data attribution
 
 * Grabar text: *Աստուածաշունչ* (Zohrab, 1805), transcribed on hy.wikisource
-  (CC BY-SA).
+  (CC BY-SA); plus the bilingual passages of Abeghyan's *Գրաբարի դասագիրք*
+  (1916) on hy.wikisource.
 * Modern Armenian text: `k-mktr/armenian_bible_hy` on Hugging Face.
 * Base model: `facebook/nllb-200-distilled-600M` (CC BY-NC 4.0), used through a
   LoRA adapter — check that licence before commercial use.
