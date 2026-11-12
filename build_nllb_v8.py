@@ -12,8 +12,8 @@ def code(src):
 
 md("""# Ashkharabar → Grabar: NLLB-200 fine-tune (LoRA), v8
 
-Experiment: same data and LoRA config as v3, but 30 epochs (vs 16) with label
-smoothing 0.1 to improve generalisation.  Tests whether v3 was under-trained.
+Experiment: v3 data, 24 epochs (vs 30 in v9), lora_dropout 0.1 (vs 0.05)
+to reduce overfitting vs v9.
 """)
 
 code("""
@@ -35,7 +35,7 @@ print('cuda', torch.cuda.is_available(), torch.cuda.get_device_name(0) if torch.
 WORK = '/kaggle/working'
 RAW = 'https://raw.githubusercontent.com/SlavH/ashkarabar-to-grabar/main'
 os.makedirs(f'{WORK}/data', exist_ok=True)
-for rel in ['data/train_v3_aug.tsv', 'data/val_v3.tsv', 'data/test_real.tsv']:
+for rel in ['data/train_v3.tsv', 'data/val_v3.tsv', 'data/test_real.tsv']:
     dest = os.path.join(WORK, rel)
     urllib.request.urlretrieve(f'{RAW}/{rel}', dest)
     print(rel, os.path.getsize(dest))
@@ -55,7 +55,7 @@ def read_pairs(path):
                 out.append((a, b))
     return out
 
-train_pairs = read_pairs(f'{WORK}/data/train_v3_aug.tsv')
+train_pairs = read_pairs(f'{WORK}/data/train_v3.tsv')
 val_pairs = read_pairs(f'{WORK}/data/val_v3.tsv')
 print('train', len(train_pairs), 'val', len(val_pairs))
 """)
@@ -71,7 +71,7 @@ model = AutoModelForSeq2SeqLM.from_pretrained(MODEL_NAME)
 
 from peft import LoraConfig, get_peft_model
 lora = LoraConfig(
-    r=64, lora_alpha=128, lora_dropout=0.05, bias='none',
+    r=64, lora_alpha=128, lora_dropout=0.1, bias='none',
     target_modules=['q_proj', 'k_proj', 'v_proj', 'out_proj', 'fc1', 'fc2'],
     task_type='SEQ_2_SEQ_LM')
 model = get_peft_model(model, lora)
@@ -104,7 +104,7 @@ collator = DataCollatorForSeq2Seq(tokenizer=tok, model=model, label_pad_token_id
 
 BATCH = 8
 GRAD_ACC = 2
-EPOCHS = 30
+EPOCHS = 24
 
 base_kwargs = dict(
     output_dir=f'{WORK}/nllb_ckpt',
