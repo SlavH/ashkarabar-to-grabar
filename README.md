@@ -14,7 +14,7 @@ Two models are included:
 | Model | Where | Size | chrF | BLEU |
 |---|---|---|---|---|
 | Transformer trained from scratch | `checkpoints/armenian_mt.pt` | 62 MB | 30.6 | 9.1 |
-| NLLB-200 distilled-600M + LoRA | `checkpoints/nllb_lora_grabar/` | 9.6 MB adapter | 36.5 | 7.7 |
+| NLLB-200 distilled-600M + LoRA | `checkpoints/nllb_lora_grabar/` | 38 MB adapter | 51.2 | 22.2 |
 
 Scores are on the same held-out set of 108 verse pairs (chrF/BLEU via
 `sacrebleu`, tokenized text, single reference). For a low-resource, morphologically
@@ -26,16 +26,20 @@ see [Limitations](#limitations).
 Real held-out verses (not seen during training):
 
 ```
+ASH  : Ողջ ժողովուրդը, տեսնելով վրանի դռան մօտ կանգնած ամպի սիւնը, ոտքի էր կանգնում, իւրաքանչիւրը երկրպագում էր իր վրանի դռան մօտ:
+GOLD : Եւ տեսանէր ամենայն ժողովուրդն զսի՛ւն ամպոյն որ կայր առ դուրս խորանին. եւ կայի՛ն ամենայն ժողովուրդն յոտն, եւ երկի՛ր պագանէին իւրաքանչիւր առ դուրս խորանի իւրոյ:
+MODEL: Եւ տեսանէին ամենայն ժողովուրդն զսիւն ամպոյն որ կայր առ դրան խորանին, եւ կայր ոտս իւրեանց. եւ երկիր պագա՛յք իւրաքանչիւր առ դուռն խորանին իւրում:
+
+ASH  : Ժողովուրդը միահամուռ պատասխան տուեց ու ասաց. «Այն ամէնը, ինչ ասել է Աստուած, կը կատարենք ու կը հնազանդուենք»:
+GOLD : Պատասխանի ետ ժողովուրդն միահամուռ, եւ ասեն. Զամենայն ինչ զոր ասաց Աստուած՝ արասցո՛ւք եւ լուիցուք:
+MODEL: Պատասխանի ետ ժողովուրդն միաձայն՝ եւ ասեն. Զամենայն զոր խօսեցաւ Աստուած՝ արասցուք եւ լուիցուք:
+
+# free-form input, outside the Bible domain
 ASH  : Աստուած ստեղծեց երկինքն ու երկիրը։
-MODEL: Եւ արար Աստուած երկինքն եւ երկիր։
+MODEL: Աստուած արար զերկինս եւ զերկիր։
 
-ASH  : Համեմունքներից պատրաստուած խունկը դրեց դրա վրայ, ինչպէս Տէրն էր հրամայել Մովսէսին:
-GOLD : եւ արկ խունկ ի վերայ նորա ի խնկոցն հանդերձանաց, որպէս հրամայեա՛ց Տէր Մովսիսի.
-MODEL: Եւ եղեւ ի վերայ նորա խունկն համեմունքին, ինչպէս պատուիրեաց Տէր Մովսէս։
-
-ASH  : Արի գինի խմեցնենք մեր հօրը, պառկենք նրա հետ ու մեր հօրից զաւակ ունենանք»:
-GOLD : Եկ արբուսցուք հօր մերում գինի, եւ ննջեսցուք ընդ նմա, եւ յարուսցուք ի հօրէ մերմէ զաւակ։
-MODEL: Ա՛յլ գինին խմեցցե՛նք հօր մեր, եւ պառկեցե՛նք ընդ նմա, եւ ծնուցե՛նք զաւակ հայր մերոյ։
+ASH  : Ես սիրում եմ հայերէնը։
+MODEL: Ես սիրեմ հայերէնս։
 ```
 
 ## Training data
@@ -118,6 +122,16 @@ kaggle kernels push -p kaggle_nllb       # NLLB LoRA run
 * 200 epochs on 2,390 pairs (≈51 min on a T4). Best validation loss 4.1692 at
   epoch 20; later epochs overfit (train loss 1.27), which is expected with a
   corpus this small.
+
+## How the NLLB model is built
+
+* Base: `facebook/nllb-200-distilled-600M`; LoRA (`r=32`, `alpha=64`) on all four
+  attention projections → 14.8M trainable parameters (38 MB adapter).
+* 30 epochs, effective batch 16, lr 3e-4 (cosine + warmup), fp16, Adafactor;
+  best validation loss 1.4814 at epoch 25, ≈42 min on a single T4.
+* Both source and target use the `hye_Armn` language tag — NLLB-200 has no
+  separate Classical Armenian token, so the mapping is learned from data.
+* Beam search (4 beams, `no_repeat_ngram_size=3`) at inference.
 
 ## Limitations
 

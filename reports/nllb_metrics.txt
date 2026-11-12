@@ -1,0 +1,1 @@
+chrF=51.22 BLEU=22.22 n=108 split=test
