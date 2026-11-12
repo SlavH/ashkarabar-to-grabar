@@ -1,0 +1,41 @@
+epoch   1/200 train=7.1148 val=6.6460 lr=4.92e-05 16s  *best*
+epoch   5/200 train=5.7597 val=5.4666 lr=2.54e-04 74s  *best*
+epoch  10/200 train=4.3759 val=4.4903 lr=7.04e-04 151s  *best*
+epoch  15/200 train=3.4843 val=4.1925 lr=9.91e-04 228s  *best*
+epoch  20/200 train=2.7927 val=4.1692 lr=9.99e-04 304s  *best*
+epoch  25/200 train=2.3580 val=4.2888 lr=9.94e-04 381s
+epoch  30/200 train=2.0986 val=4.3667 lr=9.86e-04 457s
+epoch  35/200 train=1.9274 val=4.4318 lr=9.74e-04 534s
+epoch  40/200 train=1.8186 val=4.4486 lr=9.59e-04 611s
+epoch  45/200 train=1.7391 val=4.4496 lr=9.40e-04 688s
+epoch  50/200 train=1.6765 val=4.4527 lr=9.18e-04 764s
+epoch  55/200 train=1.6255 val=4.4037 lr=8.93e-04 841s
+epoch  60/200 train=1.5848 val=4.4256 lr=8.65e-04 917s
+epoch  65/200 train=1.5521 val=4.4092 lr=8.35e-04 994s
+epoch  70/200 train=1.5204 val=4.3936 lr=8.02e-04 1071s
+epoch  75/200 train=1.4938 val=4.3632 lr=7.67e-04 1148s
+epoch  80/200 train=1.4714 val=4.3694 lr=7.30e-04 1224s
+epoch  85/200 train=1.4496 val=4.3738 lr=6.91e-04 1301s
+epoch  90/200 train=1.4315 val=4.3292 lr=6.51e-04 1377s
+epoch  95/200 train=1.4132 val=4.3297 lr=6.10e-04 1453s
+epoch 100/200 train=1.3981 val=4.3351 lr=5.68e-04 1530s
+epoch 105/200 train=1.3819 val=4.3086 lr=5.26e-04 1606s
+epoch 110/200 train=1.3696 val=4.3009 lr=4.83e-04 1682s
+epoch 115/200 train=1.3583 val=4.2823 lr=4.40e-04 1759s
+epoch 120/200 train=1.3458 val=4.2623 lr=3.98e-04 1835s
+epoch 125/200 train=1.3351 val=4.2601 lr=3.57e-04 1912s
+epoch 130/200 train=1.3256 val=4.2492 lr=3.16e-04 1988s
+epoch 135/200 train=1.3177 val=4.2459 lr=2.78e-04 2064s
+epoch 140/200 train=1.3107 val=4.2438 lr=2.40e-04 2141s
+epoch 145/200 train=1.3039 val=4.2364 lr=2.05e-04 2217s
+epoch 150/200 train=1.2967 val=4.2371 lr=1.71e-04 2293s
+epoch 155/200 train=1.2925 val=4.2242 lr=1.40e-04 2370s
+epoch 160/200 train=1.2874 val=4.2182 lr=1.12e-04 2447s
+epoch 165/200 train=1.2843 val=4.2171 lr=8.66e-05 2524s
+epoch 170/200 train=1.2801 val=4.2116 lr=6.41e-05 2600s
+epoch 175/200 train=1.2781 val=4.2033 lr=4.48e-05 2676s
+epoch 180/200 train=1.2763 val=4.2045 lr=2.88e-05 2752s
+epoch 185/200 train=1.2745 val=4.2052 lr=1.63e-05 2829s
+epoch 190/200 train=1.2741 val=4.2028 lr=7.26e-06 2906s
+epoch 195/200 train=1.2738 val=4.2032 lr=1.82e-06 2982s
+epoch 200/200 train=1.2733 val=4.2028 lr=4.01e-09 3058s

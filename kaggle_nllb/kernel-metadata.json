@@ -1,0 +1,15 @@
+{
+  "id": "slavhayrapetyan/armenian-mt-nllb",
+  "title": "Armenian MT NLLB",
+  "code_file": "nllb_train.ipynb",
+  "language": "python",
+  "kernel_type": "notebook",
+  "is_private": true,
+  "enable_gpu": true,
+  "enable_tpu": false,
+  "enable_internet": true,
+  "dataset_sources": [],
+  "competition_sources": [],
+  "kernel_sources": [],
+  "model_sources": []
+}

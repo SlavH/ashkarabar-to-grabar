@@ -1,58 +1,39 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-eval_metrics.py - Evaluate model with chrF and BLEU scores
+eval_metrics.py - evaluate the model on the held-out test split (chrF + BLEU).
 
 Usage:
     pip install sacrebleu
-    python eval_metrics.py
+    python3 eval_metrics.py            # data/test_real.tsv
+    python3 eval_metrics.py val        # data/val_real.tsv
 """
 
+import sys
 from pathlib import Path
-import torch
-from tokenizers import Tokenizer
 
-from src.model import TransMT
+from src.infer import load_model, translate
 
-_candidate = Path(r"D:\armenian_nlp")
-BASE = _candidate if _candidate.exists() else Path(__file__).resolve().parent
-CKPT_DIR = BASE / "checkpoints"
-TOK_DIR = BASE / "tokenizer"
+BASE = Path(__file__).resolve().parent
 DATA_DIR = BASE / "data"
 
-PAD_IDX = 3
-BOS_IDX = 1
-EOS_IDX = 2
-DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
+
+def read_pairs(split: str):
+    path = DATA_DIR / f"{split}_real.tsv"
+    if not path.exists():
+        path = DATA_DIR / f"{split}.csv"
+    pairs = []
+    with open(path, encoding="utf-8") as f:
+        for line in f:
+            line = line.rstrip("\n")
+            if "\t" in line:
+                src, tgt = line.split("\t", 1)
+                if src.strip() and tgt.strip():
+                    pairs.append((src.strip(), tgt.strip()))
+    return pairs
 
 
-def load_model():
-    tok = Tokenizer.from_file(str(TOK_DIR / "sp_model.json"))
-    vocab_size = tok.get_vocab_size()
-    model = TransMT(vocab=vocab_size).to(DEVICE)
-    ckpt = torch.load(CKPT_DIR / "armenian_mt.pt", map_location=DEVICE)
-    model.load_state_dict(ckpt["model"])
-    model.eval()
-    return model, tok
-
-
-def translate(model: TransMT, tok: Tokenizer, text: str, max_len: int = 100) -> str:
-    ids = [BOS_IDX] + tok.encode(text).ids + [EOS_IDX]
-    ids = ids[:max_len]
-    src = torch.tensor(ids, dtype=torch.long, device=DEVICE).unsqueeze(0)
-    with torch.no_grad():
-        out_ids = model.greedy_decode(src, max_len=max_len, device=DEVICE)
-
-    ids_out = out_ids.tolist()
-    if ids_out[0] == BOS_IDX:
-        ids_out = ids_out[1:]
-    if EOS_IDX in ids_out:
-        ids_out = ids_out[: ids_out.index(EOS_IDX)]
-
-    return tok.decode(ids_out)
-
-
-def main():
+def main(split: str = "test"):
     try:
         import sacrebleu
     except ImportError:
@@ -60,32 +41,24 @@ def main():
         return
 
     model, tok = load_model()
-
-    sources, references, predictions = [], [], []
-    with open(DATA_DIR / "val.csv", "r", encoding="utf-8") as f:
-        for line in f:
-            line = line.strip()
-            if "\t" in line:
-                src, tgt = line.split("\t", 1)
-                sources.append(src)
-                references.append(tgt)
-                predictions.append(translate(model, tok, src))
+    pairs = read_pairs(split)
+    sources = [p[0] for p in pairs]
+    references = [p[1] for p in pairs]
+    predictions = [translate(model, tok, s) for s in sources]
 
     chrf = sacrebleu.corpus_chrf(predictions, [references])
     bleu = sacrebleu.corpus_bleu(predictions, [references])
 
-    print(f"Evaluated {len(sources)} pairs")
+    print(f"Split: {split} ({len(sources)} pairs)")
     print(f"chrF: {chrf.score:.2f}")
     print(f"BLEU: {bleu.score:.2f}")
     print()
-
-    print("Sample translations:")
     for i in range(min(5, len(sources))):
         print(f"  ASH : {sources[i]}")
-        print(f"  GRB (true): {references[i]}")
-        print(f"  GRB (pred): {predictions[i]}")
+        print(f"  GOLD: {references[i]}")
+        print(f"  PRED: {predictions[i]}")
         print()
 
 
 if __name__ == "__main__":
-    main()
+    main(sys.argv[1] if len(sys.argv) > 1 else "test")

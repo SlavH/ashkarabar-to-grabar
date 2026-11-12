@@ -1,190 +1,172 @@
 # -*- coding: utf-8 -*-
 """
-train.py
-Цикл обучения Transformer MT с чекпоинтами на disk D:
+train.py - local training loop (CPU/GPU) for Modern Armenian -> Classical Armenian.
+
+The same recipe runs on Kaggle (see kaggle_train.ipynb). Use small
+--epochs values for smoke tests on CPU; real training belongs on a GPU.
+
+    python3 -m src.train --epochs 200
+    python3 -m src.train --epochs 2 --limit 50     # quick sanity check
 """
 
+import argparse
 import math
+import random
 import time
 from pathlib import Path
-from torch.utils.data import Dataset, DataLoader
+
 import torch
 import torch.nn as nn
-from tokenizers import Tokenizer
+from tokenizers import Tokenizer, decoders, models, pre_tokenizers, trainers
+from torch.utils.data import DataLoader, Dataset
 
-from model import TransMT
+from src.model import BOS_IDX, EOS_IDX, PAD_IDX, TransMT
 
-BASE = Path(r"D:\armenian_nlp")
+BASE = Path(__file__).resolve().parent.parent
 DATA_DIR = BASE / "data"
 CKPT_DIR = BASE / "checkpoints"
 TOK_DIR = BASE / "tokenizer"
-CKPT_DIR.mkdir(parents=True, exist_ok=True)
 
-TRAIN = DATA_DIR / "train.csv"
-VAL = DATA_DIR / "val.csv"
-TOK_MODEL = TOK_DIR / "sp_model.json"
-
-BATCH_SIZE = 16
-EPOCHS = 10
-LR = 1e-4
-CLIP = 1.0
+VOCAB_SIZE = 2400
+MAXLEN = 160
+BATCH = 24
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
-MAX_LEN = 128
-
-# Special token indices (must match tokenizer and model)
-PAD_IDX = 3
-BOS_IDX = 1
-EOS_IDX = 2
-UNK_IDX = 0
 
 
-class ParallelDataset(Dataset):
-    def __init__(self, path: Path, tokenizer: Tokenizer, max_len: int = MAX_LEN):
-        self.pairs = []
-        with open(path, "r", encoding="utf-8") as f:
-            for line in f:
-                line = line.strip()
-                if not line or "\t" not in line:
-                    continue
-                src, tgt = line.split("\t", 1)
-                self.pairs.append((src, tgt))
-        self.tokenizer = tokenizer
-        self.max_len = max_len
+def read_pairs(path: Path):
+    pairs = []
+    with open(path, encoding="utf-8") as f:
+        for line in f:
+            line = line.rstrip("\n")
+            if "\t" not in line:
+                continue
+            a, b = line.split("\t", 1)
+            a, b = a.strip(), b.strip()
+            if len(a) > 10 and len(b) > 10:
+                pairs.append((a, b))
+    return pairs
+
+
+def build_tokenizer(pairs) -> Tokenizer:
+    tok = Tokenizer(models.BPE(unk_token="[UNK]"))
+    tok.pre_tokenizer = pre_tokenizers.ByteLevel(add_prefix_space=False)
+    tok.decoder = decoders.ByteLevel()
+    trainer = trainers.BpeTrainer(
+        vocab_size=VOCAB_SIZE,
+        special_tokens=["[UNK]", "[BOS]", "[EOS]", "[PAD]"],
+        min_frequency=2,
+        show_progress=False,
+    )
+    tok.train_from_iterator([x for p in pairs for x in p], trainer)
+    TOK_DIR.mkdir(parents=True, exist_ok=True)
+    tok.save(str(TOK_DIR / "sp_model.json"))
+    return tok
+
+
+class PairDS(Dataset):
+    def __init__(self, pairs, tok):
+        self.pairs, self.tok = pairs, tok
 
     def __len__(self):
         return len(self.pairs)
 
-    def __getitem__(self, idx):
-        src, tgt = self.pairs[idx]
-        src_ids = [BOS_IDX] + self.tokenizer.encode(src).ids + [EOS_IDX]
-        tgt_ids = [BOS_IDX] + self.tokenizer.encode(tgt).ids + [EOS_IDX]
-        src_ids = src_ids[: self.max_len]
-        tgt_ids = tgt_ids[: self.max_len]
-        return torch.tensor(src_ids, dtype=torch.long), torch.tensor(tgt_ids, dtype=torch.long)
+    def __getitem__(self, i):
+        a, b = self.pairs[i]
+        ai = [BOS_IDX] + self.tok.encode(a).ids[: MAXLEN - 2] + [EOS_IDX]
+        bi = [BOS_IDX] + self.tok.encode(b).ids[: MAXLEN - 2] + [EOS_IDX]
+        return torch.tensor(ai), torch.tensor(bi)
 
 
-def collate_fn(batch):
-    srcs, tgts = zip(*batch)
-    src_padded = nn.utils.rnn.pad_sequence(srcs, batch_first=True, padding_value=PAD_IDX)
-    tgt_padded = nn.utils.rnn.pad_sequence(tgts, batch_first=True, padding_value=PAD_IDX)
-    return src_padded, tgt_padded
-
-
-def train_epoch(model, loader, optimizer, criterion, device):
-    model.train()
-    total_loss = 0
-    for src, tgt in loader:
-        src = src.to(device)
-        tgt = tgt.to(device)
-
-        tgt_input = tgt[:, :-1]
-        tgt_output = tgt[:, 1:]
-
-        logits = model(src, tgt_input)
-        loss = criterion(
-            logits.reshape(-1, logits.size(-1)),
-            tgt_output.reshape(-1),
-        )
-
-        optimizer.zero_grad()
-        loss.backward()
-        nn.utils.clip_grad_norm_(model.parameters(), CLIP)
-        optimizer.step()
-
-        total_loss += loss.item()
-    return total_loss / len(loader)
-
-
-def evaluate(model, loader, criterion, device):
-    model.eval()
-    total_loss = 0
-    with torch.no_grad():
-        for src, tgt in loader:
-            src = src.to(device)
-            tgt = tgt.to(device)
-            tgt_input = tgt[:, :-1]
-            tgt_output = tgt[:, 1:]
-            logits = model(src, tgt_input)
-            loss = criterion(
-                logits.reshape(-1, logits.size(-1)),
-                tgt_output.reshape(-1),
-            )
-            total_loss += loss.item()
-    return total_loss / len(loader)
+def collate(batch):
+    src, tgt = zip(*batch)
+    return (
+        nn.utils.rnn.pad_sequence(src, batch_first=True, padding_value=PAD_IDX),
+        nn.utils.rnn.pad_sequence(tgt, batch_first=True, padding_value=PAD_IDX),
+    )
 
 
 def main():
-    if not TRAIN.exists() or not VAL.exists():
-        print("[!] Данные не найдены. Запустите prepare_data.py")
-        return
-    if not TOK_MODEL.exists():
-        print("[!] Токенайзер не найден. Запустите train_tokenizer.py")
-        return
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--epochs", type=int, default=200)
+    ap.add_argument("--limit", type=int, default=0, help="cap on training pairs (smoke tests)")
+    args = ap.parse_args()
 
-    tokenizer = Tokenizer.from_file(str(TOK_MODEL))
-    vocab_size = tokenizer.get_vocab_size()
-    print(f"Размер словаря: {vocab_size}")
+    train_pairs = read_pairs(DATA_DIR / "train_real.tsv")
+    val_pairs = read_pairs(DATA_DIR / "val_real.tsv")
+    if args.limit:
+        train_pairs = train_pairs[: args.limit]
+        val_pairs = val_pairs[: max(8, args.limit // 5)]
 
-    train_ds = ParallelDataset(TRAIN, tokenizer)
-    val_ds = ParallelDataset(VAL, tokenizer)
+    random.seed(1234)
+    torch.manual_seed(1234)
 
-    train_loader = DataLoader(train_ds, batch_size=BATCH_SIZE, shuffle=True, collate_fn=collate_fn, num_workers=0)
-    val_loader = DataLoader(val_ds, batch_size=BATCH_SIZE, shuffle=False, collate_fn=collate_fn, num_workers=0)
+    tok_path = TOK_DIR / "sp_model.json"
+    tok = Tokenizer.from_file(str(tok_path)) if tok_path.exists() else build_tokenizer(train_pairs)
+    vocab = tok.get_vocab_size()
 
-    model = TransMT(vocab_size=vocab_size).to(DEVICE)
+    print(f"device={DEVICE} vocab={vocab} train={len(train_pairs)} val={len(val_pairs)}")
 
-    criterion = nn.CrossEntropyLoss(ignore_index=PAD_IDX)
-    optimizer = torch.optim.Adam(model.parameters(), lr=LR, betas=(0.9, 0.98), eps=1e-9)
+    dl_train = DataLoader(PairDS(train_pairs, tok), batch_size=BATCH, shuffle=True,
+                          collate_fn=collate)
+    dl_val = DataLoader(PairDS(val_pairs, tok), batch_size=64, shuffle=False,
+                        collate_fn=collate)
 
-    best_val = float("inf")
-    start_epoch = 1
+    model = TransMT(vocab=vocab).to(DEVICE)
+    crit = nn.CrossEntropyLoss(ignore_index=PAD_IDX, label_smoothing=0.1)
+    opt = torch.optim.AdamW(model.parameters(), lr=3e-4, betas=(0.9, 0.98),
+                            weight_decay=0.01)
+    sched = torch.optim.lr_scheduler.OneCycleLR(
+        opt, max_lr=1e-3, total_steps=max(1, args.epochs * len(dl_train)),
+        pct_start=0.08, anneal_strategy="cos")
 
-    latest = CKPT_DIR / "last.pt"
-    if latest.exists():
-        print(f"Найден чекпоинт {latest}, продолжаю обучение...")
-        ckpt = torch.load(latest, map_location=DEVICE)
-        model.load_state_dict(ckpt["model"])
-        optimizer.load_state_dict(ckpt["optimizer"])
-        start_epoch = ckpt["epoch"] + 1
-        best_val = ckpt.get("best_val", best_val)
-        print(f"Продолжаю с эпохи {start_epoch}, лучший val={best_val:.4f}")
+    def batch_loss(s, t):
+        logits = model(s, t[:, :-1])
+        return crit(logits.reshape(-1, logits.size(-1)), t[:, 1:].reshape(-1))
 
-    for epoch in range(start_epoch, EPOCHS + 1):
-        t0 = time.time()
-        train_loss = train_epoch(model, train_loader, optimizer, criterion, DEVICE)
-        val_loss = evaluate(model, val_loader, criterion, DEVICE)
-        dt = time.time() - t0
+    @torch.no_grad()
+    def evaluate():
+        model.eval()
+        tot, n = 0.0, 0
+        for s, t in dl_val:
+            s, t = s.to(DEVICE), t.to(DEVICE)
+            loss = batch_loss(s, t)
+            if torch.isfinite(loss):
+                tot += loss.item()
+                n += 1
+        model.train()
+        return tot / max(1, n)
 
-        print(
-            f"Эпоха {epoch:2d} | train_loss={train_loss:.4f} | val_loss={val_loss:.4f} | "
-            f"val_ppl={math.exp(val_loss):.2f} | время={dt:.1f}с"
-        )
+    best, best_state, best_ep = float("inf"), None, 0
+    CKPT_DIR.mkdir(parents=True, exist_ok=True)
+    t0 = time.time()
 
-        torch.save(
-            {
-                "epoch": epoch,
-                "model": model.state_dict(),
-                "optimizer": optimizer.state_dict(),
-                "val_loss": val_loss,
-            },
-            CKPT_DIR / "last.pt",
-        )
+    for ep in range(1, args.epochs + 1):
+        model.train()
+        tot, nb = 0.0, 0
+        for s, t in dl_train:
+            s, t = s.to(DEVICE), t.to(DEVICE)
+            loss = 0.5 * (batch_loss(s, t) + batch_loss(t, s))
+            opt.zero_grad(set_to_none=True)
+            loss.backward()
+            nn.utils.clip_grad_norm_(model.parameters(), 1.0)
+            opt.step()
+            sched.step()
+            tot += loss.item()
+            nb += 1
 
-        if val_loss < best_val:
-            best_val = val_loss
-            torch.save(
-                {
-                    "epoch": epoch,
-                    "model": model.state_dict(),
-                    "optimizer": optimizer.state_dict(),
-                    "val_loss": val_loss,
-                },
-                CKPT_DIR / "best.pt",
-            )
-            print(f"  >>> Новый лучший чекпоинт (val_loss={best_val:.4f})")
+        vl = evaluate()
+        msg = (f"epoch {ep:3d}/{args.epochs} train={tot / max(1, nb):.4f} "
+               f"val={vl:.4f} lr={sched.get_last_lr()[0]:.2e} {time.time() - t0:.0f}s")
+        if vl < best:
+            best, best_ep = vl, ep
+            best_state = {k: v.detach().cpu().clone() for k, v in model.state_dict().items()}
+            msg += " *best*"
+            torch.save({"model": best_state, "vocab": vocab, "config": model.config,
+                        "val_loss": best, "epoch": ep}, CKPT_DIR / "armenian_mt.pt")
+        print(msg, flush=True)
 
-    print(f"\n[OK] Обучение завершено. Лучший val_loss={best_val:.4f}")
-    print(f"Чекпоинты в {CKPT_DIR}")
+    print(f"\nbest val={best:.4f} (epoch {best_ep}); ppl={math.exp(best):.2f}")
+    print(f"checkpoint: {CKPT_DIR / 'armenian_mt.pt'}")
 
 
 if __name__ == "__main__":
