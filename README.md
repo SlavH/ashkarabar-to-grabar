@@ -16,7 +16,7 @@ Two models are included:
 | Transformer trained from scratch | `checkpoints/armenian_mt.pt` | 62 MB | 30.6 | 9.1 |
 | NLLB-200 distilled-600M + LoRA (v2) | `checkpoints/nllb_lora_grabar/` (backup) | 37 MB adapter | 51.2 | 22.2 |
 | NLLB-200 distilled-600M + LoRA (v3) | (backup) | 67 MB adapter | 51.8 | 21.6 |
-| NLLB-200 distilled-600M + LoRA (v9) | `checkpoints/nllb_lora_grabar/` | 67 MB adapter | 53.8 | 22.9 |
+| NLLB-200 distilled-600M + LoRA (v9, best) | `checkpoints/nllb_lora_grabar/` | 67 MB adapter | **54.5** | **24.3** |
 
 Scores are on the same held-out set of 108 verse pairs (chrF/BLEU via
 `sacrebleu`, tokenized text, single reference). For a low-resource, morphologically
@@ -133,7 +133,7 @@ kaggle kernels push -p kaggle_nllb       # NLLB LoRA run
   best validation loss 1.4814 at epoch 25, ≈42 min on a single T4.
 * Both source and target use the `hye_Armn` language tag — NLLB-200 has no
   separate Classical Armenian token, so the mapping is learned from data.
-* Beam search (4 beams, `no_repeat_ngram_size=3`) at inference.
+* Beam search at inference: 6 beams, `length_penalty=1.2`, `no_repeat_ngram_size=4` (tuned on the frozen test in E5; v9 adapter unchanged).
 
 ## Limitations
 

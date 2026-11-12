@@ -24,7 +24,7 @@ def main():
             break
         if not line:
             break
-        out = translate(model, tok, line, device=device, num_beams=4)
+        out = translate(model, tok, line, device=device)
         print(f"GRB > {out}\n")
 
 
