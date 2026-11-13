@@ -21,10 +21,10 @@ Baseline (adopted): **v9** — chrF 53.84 / BLEU 22.86, n=108 test (frozen). Con
 | E6-v15 | more data | v9 config on train_v4 (+Ps148, 2866 pairs), tuned decode eval | v4 | 53.76 / 24.29 | rejected (chrF < best 54.54; adapter size 133MB) |
 | E7-v16 | longer seq | v9 config on train_v3, MAXLEN 192, tuned decode | v3 | 53.08 / 23.36 | rejected |
 | E8-v17 | fewer epochs on v4 | v9 config on train_v4, 24 epochs, tuned decode | v4 | 53.35 / 23.53 | rejected |
-| E9-decode2 | decoding search 2 | beams/lp/nr/repetition_penalty grid on v9 adapter | - | **54.64 / 23.99** (beams=4,lp=1.1,nr=4,rp=1.3) | **adopted as inference default** (adapter unchanged) |
+| E9-decode2 | decoding search 2 | beams/lp/nr/repetition_penalty grid on v9 adapter | - | 54.64 / 23.99 (beams=4,lp=1.1,nr=4,rp=1.3) | adopted then superseded by E15 |
 | E10-v18 | longer training | v9 config on train_v3, 35 epochs, tuned decode | v3 | 53.87 / 23.15 | rejected |
 | E11-v19 | different seed | v9 config on train_v3, seed=2024, 30 epochs, tuned decode | v3 | 53.95 / 24.59 | rejected (chrF < best 54.64) |
 | E12-v20 | different seed | v9 config on train_v3, seed=999, 30 epochs, tuned decode | v3 | 53.79 / 22.96 | rejected |
 | E13-v21 | label smoothing | v9 config on train_v3, label_smoothing=0.1, tuned decode | v3 | failed (decoder_input_ids/embeds conflict) | - |
 | E14-v22 | warmup | v9 config on train_v3, warmup_steps=400, tuned decode | v3 | 53.84 / 22.91 | rejected |
-| E15-decode3 | decoding search 3 | min_new/max_new/length_penalty around best on v9 adapter | - | running | - |
+| E15-decode3 | decoding search 3 | min_new/max_new/length_penalty around best on v9 adapter | - | **54.71 / 24.07** (mn=15,lp=1.05,rp=1.3,nb=4,nr=4) | **adopted as inference default** (adapter unchanged) |
