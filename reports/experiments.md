@@ -30,4 +30,4 @@ Baseline (adopted): **v9** — chrF 53.84 / BLEU 22.86, n=108 test (frozen). Con
 | E15-decode3 | decoding search 3 | min_new/max_new/length_penalty around best on v9 adapter | - | 54.71 / 24.07 (mn=15,lp=1.05,rp=1.3,nb=4,nr=4) | adopted then superseded by E17 |
 | E16-v23 | different seed | v9 config on train_v3, seed=42, 30 epochs, tuned decode | v3 | 54.11 / 24.59 | rejected (chrF < best 54.71) |
 | E17-decode4 | decoding search 4 | beams/lp/rp fine grid (mn=15,nr=4) on v9 adapter | - | **54.80 / 24.06** (nb=4,lp=1.05,rp=1.4,mn=15,nr=4) | **adopted as inference default** (adapter unchanged) |
-| E18-decode5 | decoding search 5 | no_repeat_ngram_size/min_new_tokens grid (nb=4,lp=1.05,rp=1.4) on v9 | - | running | - |
+| E18-decode5 | decoding search 5 | no_repeat_ngram_size/min_new_tokens grid (nb=4,lp=1.05,rp=1.4) on v9 | - | - | not run (Kaggle weekly GPU quota reached) |
