@@ -25,3 +25,4 @@ Baseline (adopted): **v9** — chrF 53.84 / BLEU 22.86, n=108 test (frozen). Con
 | E10-v18 | longer training | v9 config on train_v3, 35 epochs, tuned decode | v3 | 53.87 / 23.15 | rejected |
 | E11-v19 | different seed | v9 config on train_v3, seed=2024, 30 epochs, tuned decode | v3 | 53.95 / 24.59 | rejected (chrF < best 54.64) |
 | E12-v20 | different seed | v9 config on train_v3, seed=999, 30 epochs, tuned decode | v3 | 53.79 / 22.96 | rejected |
+| E13-v21 | label smoothing | v9 config on train_v3, label_smoothing=0.1, tuned decode | v3 | running | - |
