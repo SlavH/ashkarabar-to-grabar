@@ -19,4 +19,4 @@ Baseline (adopted): **v9** — chrF 53.84 / BLEU 22.86, n=108 test (frozen). Con
 | E4-v13 | smaller LoRA | r=32 alpha=64, 30 epochs, lr 2e-4 | v3 | 52.86 / 22.17 | rejected |
 | E5-decode | decoding search | beams/lp/no_repeat_ngram grid on v9 adapter | - | **54.54 / 24.25** (beams=6,lp=1.2,nr=4) | **adopted as inference default** (adapter unchanged) |
 | E6-v15 | more data | v9 config on train_v4 (+Ps148, 2866 pairs), tuned decode eval | v4 | 53.76 / 24.29 | rejected (chrF < best 54.54; adapter size 133MB) |
-| E7-v16 | longer seq | v9 config on train_v3, MAXLEN 192, tuned decode | v3 | running | - |
+| E7-v16 | longer seq | v9 config on train_v3, MAXLEN 192, tuned decode | v3 | 53.08 / 23.36 | rejected |
