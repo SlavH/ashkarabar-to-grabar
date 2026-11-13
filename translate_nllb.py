@@ -46,8 +46,8 @@ def load_model(adapter_dir: Path = ADAPTER_DIR, device: str | None = None):
 
 
 def translate(model, tokenizer, text: str, device: str = "cpu",
-              num_beams: int = 6, max_new_tokens: int = MAX_LEN,
-              length_penalty: float = 1.2, repetition_penalty: float = 1.0,
+              num_beams: int = 4, max_new_tokens: int = MAX_LEN,
+              length_penalty: float = 1.1, repetition_penalty: float = 1.3,
               no_repeat_ngram_size: int = 4) -> str:
     import torch
 
@@ -69,7 +69,7 @@ def main():
     parser = argparse.ArgumentParser(description="Translate ashkharabar -> grabar (NLLB)")
     parser.add_argument("--text", required=True)
     parser.add_argument("--adapter", default=str(ADAPTER_DIR))
-    parser.add_argument("--beams", type=int, default=6)
+    parser.add_argument("--beams", type=int, default=4)
     args = parser.parse_args()
 
     model, tokenizer, device = load_model(Path(args.adapter))

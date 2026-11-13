@@ -17,8 +17,8 @@ Baseline (adopted): **v9** — chrF 53.84 / BLEU 22.86, n=108 test (frozen). Con
 | E2-v11 | regularization | 24 epochs, lora_dropout 0.1 | v3 | 53.53 / 23.35 | rejected (chrF < v9) |
 | E3-v12 | lr/warmup | lr 1e-4, warmup 300, 30 epochs, dropout 0.05 | v3 | 51.09 / 20.53 | rejected (too slow LR) |
 | E4-v13 | smaller LoRA | r=32 alpha=64, 30 epochs, lr 2e-4 | v3 | 52.86 / 22.17 | rejected |
-| E5-decode | decoding search | beams/lp/no_repeat_ngram grid on v9 adapter | - | **54.54 / 24.25** (beams=6,lp=1.2,nr=4) | **adopted as inference default** (adapter unchanged) |
+| E5-decode | decoding search | beams/lp/no_repeat_ngram grid on v9 adapter | - | 54.54 / 24.25 (beams=6,lp=1.2,nr=4) | adopted then superseded by E9 |
 | E6-v15 | more data | v9 config on train_v4 (+Ps148, 2866 pairs), tuned decode eval | v4 | 53.76 / 24.29 | rejected (chrF < best 54.54; adapter size 133MB) |
 | E7-v16 | longer seq | v9 config on train_v3, MAXLEN 192, tuned decode | v3 | 53.08 / 23.36 | rejected |
 | E8-v17 | fewer epochs on v4 | v9 config on train_v4, 24 epochs, tuned decode | v4 | 53.35 / 23.53 | rejected |
-| E9-decode2 | decoding search 2 | beams/lp/nr/repetition_penalty grid on v9 adapter | - | running | - |
+| E9-decode2 | decoding search 2 | beams/lp/nr/repetition_penalty grid on v9 adapter | - | **54.64 / 23.99** (beams=4,lp=1.1,nr=4,rp=1.3) | **adopted as inference default** (adapter unchanged) |
