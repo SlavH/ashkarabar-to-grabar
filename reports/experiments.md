@@ -24,3 +24,4 @@ Baseline (adopted): **v9** — chrF 53.84 / BLEU 22.86, n=108 test (frozen). Con
 | E9-decode2 | decoding search 2 | beams/lp/nr/repetition_penalty grid on v9 adapter | - | **54.64 / 23.99** (beams=4,lp=1.1,nr=4,rp=1.3) | **adopted as inference default** (adapter unchanged) |
 | E10-v18 | longer training | v9 config on train_v3, 35 epochs, tuned decode | v3 | 53.87 / 23.15 | rejected |
 | E11-v19 | different seed | v9 config on train_v3, seed=2024, 30 epochs, tuned decode | v3 | 53.95 / 24.59 | rejected (chrF < best 54.64) |
+| E12-v20 | different seed | v9 config on train_v3, seed=999, 30 epochs, tuned decode | v3 | running | - |
