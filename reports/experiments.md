@@ -28,3 +28,4 @@ Baseline (adopted): **v9** — chrF 53.84 / BLEU 22.86, n=108 test (frozen). Con
 | E13-v21 | label smoothing | v9 config on train_v3, label_smoothing=0.1, tuned decode | v3 | failed (decoder_input_ids/embeds conflict) | - |
 | E14-v22 | warmup | v9 config on train_v3, warmup_steps=400, tuned decode | v3 | 53.84 / 22.91 | rejected |
 | E15-decode3 | decoding search 3 | min_new/max_new/length_penalty around best on v9 adapter | - | **54.71 / 24.07** (mn=15,lp=1.05,rp=1.3,nb=4,nr=4) | **adopted as inference default** (adapter unchanged) |
+| E16-v23 | different seed | v9 config on train_v3, seed=42, 30 epochs, tuned decode | v3 | running | - |
