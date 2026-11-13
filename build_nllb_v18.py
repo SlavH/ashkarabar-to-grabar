@@ -17,7 +17,7 @@ import torch
 from torch.utils.data import Dataset
 import transformers
 from transformers import (AutoModelForSeq2SeqLM, AutoTokenizer, DataCollatorForSeq2Seq, Seq2SeqTrainer, Seq2SeqTrainingArguments)
-print('transformers', transformers.__version__, 'torch', torch.__version())
+print('transformers', transformers.__version__)
 
 WORK='/kaggle/working'; RAW='https://raw.githubusercontent.com/SlavH/ashkarabar-to-grabar/main'
 os.makedirs(f'{WORK}/data', exist_ok=True)
