@@ -16,7 +16,7 @@ Two models are included:
 | Transformer trained from scratch | `checkpoints/armenian_mt.pt` | 62 MB | 30.6 | 9.1 |
 | NLLB-200 distilled-600M + LoRA (v2) | `checkpoints/nllb_lora_grabar/` (backup) | 37 MB adapter | 51.2 | 22.2 |
 | NLLB-200 distilled-600M + LoRA (v3) | (backup) | 67 MB adapter | 51.8 | 21.6 |
-| NLLB-200 distilled-600M + LoRA (v9, best) | `checkpoints/nllb_lora_grabar/` | 67 MB adapter | **54.7** | **24.1** |
+| NLLB-200 distilled-600M + LoRA (v9, best) | `checkpoints/nllb_lora_grabar/` | 67 MB adapter | **54.8** | **24.1** |
 
 Scores are on the same held-out set of 108 verse pairs (chrF/BLEU via
 `sacrebleu`, tokenized text, single reference). For a low-resource, morphologically
@@ -137,7 +137,7 @@ kaggle kernels push -p kaggle_nllb       # NLLB LoRA run
   separate Classical Armenian token, so the mapping is learned from data.
 * Inference: beam search, 6 beams, `length_penalty=1.2`, `no_repeat_ngram_size=4`
   (E5 decoding search on the frozen test; adapter unchanged). Best on the frozen
-  108-verse test: **chrF 54.71 / BLEU 24.07**.
+  108-verse test: **chrF 54.80 / BLEU 24.06**.
 
 ## Limitations
 
