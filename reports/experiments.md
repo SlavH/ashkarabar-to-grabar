@@ -32,6 +32,6 @@ Baseline (adopted): **v9** — chrF 53.84 / BLEU 22.86, n=108 test (frozen). Con
 | E17-decode4 | decoding search 4 | beams/lp/rp fine grid (mn=15,nr=4) on v9 adapter | - | 54.80 / 24.06 (nb=4,lp=1.05,rp=1.4,mn=15,nr=4) | adopted then superseded by E18 |
 | E18-decode5 | decoding search 5 | no_repeat_ngram_size/min_new_tokens grid (nb=4,lp=1.05,rp=1.4) on v9 | - | **55.30 / 25.38** (nr=0,mn=20,nb=4,lp=1.05,rp=1.4) | **adopted as inference default** (adapter unchanged) |
 | E19-v24 | more data (v5) | v9 config on train_v5 (+6 clean pairs), 30 epochs, tuned decode | v5 | 52.43 / 22.43 | rejected (chrF < 55.30) |
-| E20-v25 | longer training on v5 | v9 config on train_v5, 35 epochs, tuned decode | v5 | - | prepared (Kaggle GPU quota blocked) |
+| E20-v25 | longer training on v5 | v9 config on train_v5, 35 epochs, tuned decode | v5 | running | - |
 | E21-v26 | lower LR on v5 | v9 config on train_v5, lr=1.5e-4, 30 epochs, tuned decode | v5 | - | prepared (Kaggle GPU quota blocked) |
 | E22-v27 | different seed on v5 | v9 config on train_v5, seed=999, 30 epochs, tuned decode | v5 | - | prepared (Kaggle GPU quota blocked) |
