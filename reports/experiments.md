@@ -33,3 +33,4 @@ Baseline (adopted): **v9** — chrF 53.84 / BLEU 22.86, n=108 test (frozen). Con
 | E18-decode5 | decoding search 5 | no_repeat_ngram_size/min_new_tokens grid (nb=4,lp=1.05,rp=1.4) on v9 | - | - | not run (Kaggle weekly GPU quota reached) |
 | E19-v24 | more data (v5) | v9 config on train_v5 (+6 clean pairs), 30 epochs, tuned decode | v5 | - | prepared (Kaggle GPU quota blocked) |
 | E20-v25 | longer training on v5 | v9 config on train_v5, 35 epochs, tuned decode | v5 | - | prepared (Kaggle GPU quota blocked) |
+| E21-v26 | lower LR on v5 | v9 config on train_v5, lr=1.5e-4, 30 epochs, tuned decode | v5 | - | prepared (Kaggle GPU quota blocked) |
