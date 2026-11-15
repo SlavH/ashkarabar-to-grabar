@@ -77,5 +77,6 @@ These are not necessarily “worst” translations, but show largest surface div
 - **Note:** strong semantic match; differences mainly lexical/verb choice and minor omission/detail vs gold.
 
 ## Suggested next focus
-- Manual review of low-overlap/length-mismatch items in `reports/test_error_tags_e27.tsv` to distinguish true errors (omission, wrong meaning, wrong name/morphology) from acceptable grabar variants; a few low-overlap cases (#49, #107) may reflect test-pair misalignment rather than model error.
+- Manual review of low-overlap/length-mismatch items in `reports/test_error_tags_e27.tsv` to distinguish true errors (omission, wrong meaning, wrong name/morphology) from acceptable grabar variants.
+- **Possible test misalignments (flagged, not changed):** systematic chargram-overlap scan of all 108 items highlights **#49** and **#107** as outliers (very low pred–ref overlap but much higher src–pred overlap; predictions track source content while golds correspond to different verse/continuation). These appear to originate from `data/parallel_real.tsv` and are present in frozen `data/test_real.tsv`; correcting them would require corpus-level re-alignment/rebuild and explicit confirmation to alter the benchmark.
 - Highest-leverage improvement remains **new verified, leak-checked parallel data** and/or modeling changes; decode around the current optimum is saturated (E23–E26).
