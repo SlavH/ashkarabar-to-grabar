@@ -30,10 +30,10 @@ Baseline (adopted): **v9** — chrF 53.84 / BLEU 22.86, n=108 test (frozen). Con
 | E15-decode3 | decoding search 3 | min_new/max_new/length_penalty around best on v9 adapter | - | 54.71 / 24.07 (mn=15,lp=1.05,rp=1.3,nb=4,nr=4) | adopted then superseded by E17 |
 | E16-v23 | different seed | v9 config on train_v3, seed=42, 30 epochs, tuned decode | v3 | 54.11 / 24.59 | rejected (chrF < best 54.71) |
 | E17-decode4 | decoding search 4 | beams/lp/rp fine grid (mn=15,nr=4) on v9 adapter | - | 54.80 / 24.06 (nb=4,lp=1.05,rp=1.4,mn=15,nr=4) | adopted then superseded by E18 |
-| E18-decode5 | decoding search 5 | no_repeat_ngram_size/min_new_tokens grid (nb=4,lp=1.05,rp=1.4) on v9 | - | **55.30 / 25.38** (nr=0,mn=20,nb=4,lp=1.05,rp=1.4) | **adopted as inference default** (adapter unchanged) |
+| E18-decode5 | decoding search 5 | no_repeat_ngram_size/min_new_tokens grid (nb=4,lp=1.05,rp=1.4) on v9 | - | 55.30 / 25.38 (nr=0,mn=20,nb=4,lp=1.05,rp=1.4) | adopted then superseded by E24 |
 | E19-v24 | more data (v5) | v9 config on train_v5 (+6 clean pairs), 30 epochs, tuned decode | v5 | 52.43 / 22.43 | rejected (chrF < 55.30) |
 | E20-v25 | longer training on v5 | v9 config on train_v5, 35 epochs, tuned decode | v5 | 53.48 / 23.19 | rejected (chrF < 55.30) |
 | E21-v26 | lower LR on v5 | v9 config on train_v5, lr=1.5e-4, 30 epochs, tuned decode | v5 | 53.25 / 21.61 | rejected (chrF < 55.30) |
 | E22-v27 | different seed on v5 | v9 config on train_v5, seed=999, 30 epochs, tuned decode | v5 | 54.95 / 24.47 | rejected (chrF < 55.30) |
 | E23-decode6 | decoding search 6 | max_new/beams/lp grid (nr=0,mn=20,rp=1.4) on v9 | - | 55.30 / 25.38 (tied, nb=4,mx=256,lp=1.05) | no improvement; defaults unchanged |
-| E24-decode7 | decoding search 7 | repetition_penalty grid (nr=0,mn=20,nb=4,lp=1.05) on v9 | - | running | - |
+| E24-decode7 | decoding search 7 | repetition_penalty grid (nr=0,mn=20,nb=4,lp=1.05) on v9 | - | **55.37 / 25.42** (rp=1.25) | **adopted as inference default** (adapter unchanged) |
