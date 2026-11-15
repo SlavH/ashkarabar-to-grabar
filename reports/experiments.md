@@ -39,4 +39,4 @@ Baseline (adopted): **v9** — chrF 53.84 / BLEU 22.86, n=108 test (frozen). Con
 | E24-decode7 | decoding search 7 | repetition_penalty grid (nr=0,mn=20,nb=4,lp=1.05) on v9 | - | 55.37 / 25.42 (rp=1.25) | adopted then superseded by E25 |
 | E25-decode8 | decoding search 8 | fine rp/mn/lp grid around best (nr=0,nb=4) on v9 | - | **55.41 / 25.58** (rp=1.22,mn=20,lp=1.07) | **adopted as inference default** (adapter unchanged) |
 | E26-decode9 | decoding search 9 | beams/lp/rp grid (nr=0,mn=20) on v9 | - | 55.41 / 25.58 (tied, nb=4,lp=1.07,rp=1.22) | no improvement; defaults unchanged |
-| E27-export-preds | analysis | export 108 test predictions with current best decode (nr=0,mn=20,nb=4,lp=1.07,rp=1.22) | - | running | archive preds for error tagging |
+| E27-export-preds | analysis | export 108 test predictions with current best decode (nr=0,mn=20,nb=4,lp=1.07,rp=1.22) | - | 55.41 / 25.58 | archived `reports/preds_test_best_e27.jsonl` (108 items) |
