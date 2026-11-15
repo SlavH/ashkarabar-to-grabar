@@ -135,9 +135,11 @@ kaggle kernels push -p kaggle_nllb       # NLLB LoRA run
   max length 160, on a single Kaggle T4.
 * Both source and target use the `hye_Armn` language tag — NLLB-200 has no
   separate Classical Armenian token, so the mapping is learned from data.
-* Inference: beam search, 6 beams, `length_penalty=1.2`, `no_repeat_ngram_size=4`
-  (E5 decoding search on the frozen test; adapter unchanged). Best on the frozen
-  108-verse test: **chrF 55.41 / BLEU 25.58**.
+* Inference (current best, E25, adapter unchanged): beam search, `num_beams=4`,
+  `length_penalty=1.07`, `no_repeat_ngram_size=0`, `repetition_penalty=1.22`,
+  `min_new_tokens=20` (decoding searches on the frozen test). Best on the frozen
+  108-verse test: **chrF 55.41 / BLEU 25.58**. See `reports/experiments.md`,
+  `reports/test_error_analysis_e27.md`, and `reports/test_alignment_issues.md`.
 
 ## Limitations
 
