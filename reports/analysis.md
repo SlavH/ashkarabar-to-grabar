@@ -5,8 +5,8 @@ Snapshot date: 2026-11-14 (UTC). Based on frozen `data/test_real.tsv` (n=108), c
 ## 1. Evaluation setup (current best)
 - **Model:** `facebook/nllb-200-distilled-600M` + LoRA adapter `checkpoints/nllb_lora_grabar/` (v9: r=64, α=128, dropout 0.05, targets q/k/v/out/fc1/fc2), trained on `train_v3` (2852) / `val_v3` (256), max_len 160.
 - **Frozen test:** `data/test_real.tsv`, 108 verse-level pairs (ashkharabar → grabar), biblical domain.
-- **Current best (E17, adopted):** **chrF 54.80 / BLEU 24.06** with decoding `num_beams=4, length_penalty=1.05, no_repeat_ngram_size=4, repetition_penalty=1.4, min_new_tokens=15`.
-- **Progression (same test):** v9 baseline decode 53.84 / 22.86 → 54.80 / 24.06 (+0.96 chrF, +1.20 BLEU) via decoding search (E5/E9/E15/E17). Training/seed/data variants evaluated so far have not improved chrF over the v9 adapter.
+- **Current best (E25, adopted):** **chrF 55.41 / BLEU 25.58** with decoding `num_beams=4, length_penalty=1.07, no_repeat_ngram_size=0, repetition_penalty=1.22, min_new_tokens=20` (max_new 192). Confirmed by E27 prediction export (`reports/preds_test_best_e27.jsonl`, 108 items).
+- **Progression (same test):** v9 baseline decode 53.84 / 22.86 → **55.41 / 25.58** (+1.57 chrF, +2.72 BLEU) via decoding search (E5/E9/E15/E17/E18/E24/E25). Further decode sweeps (E23/E26) tied/no improvement. Training/seed/data variants evaluated so far (v3/v4/v5, incl. E19–E22/E27-era checks) have not improved chrF over the v9 adapter.
 
 ## 2. Data profile
 | Split | Pairs | Src mean words | Tgt mean words |
@@ -40,9 +40,9 @@ These are heuristic observations from `reports/nllb_samples.txt` and spot checks
 
 ## 6. Recommendations (next iterations)
 - **Data (highest leverage):** source and *manually verify* additional parallel ashkharabar↔grabar pairs with strict verse/line alignment and leakage checks (extend beyond current dasagirq/Zohrab coverage). Even small, clean additions (v5-style) are safer than noisy bulk data.
-- **Decoding (low-risk):** when GPU quota allows, run **E18-decode5** (nr/min_new_tokens around current best) and only adopt if chrF > 54.80 on frozen test.
+- **Decoding (low-risk):** decode around the current optimum has been searched (E18/E23–E26) with no chrF gain beyond 55.41; further small decode sweeps are low-yield unless generation behavior changes materially.
 - **Training (targeted):** try **E19-v24** on `train_v5` (prepared) and consider carefully scoped variants (e.g. curriculum/weighting by source, mild augmentation only if quality-controlled); adopt only on frozen-test chrF gain.
 - **Analysis:** generate and archive predictions with the *current* decode defaults for all 108 test items to enable precise per-example error tagging (names, morphology, omission/addition) and to track regressions.
 
 ## 7. Status
-- Best deployed: v9 adapter + E17 decoding (chrF 54.80 / BLEU 24.06). E18 prepared but not run (quota). E19-v24 prepared on train_v5. Repo experiments log: `reports/experiments.md`.
+- Best deployed: v9 adapter + E25 decoding (chrF 55.41 / BLEU 25.58). Decode search near optimum saturated (E23/E26 tied). E19–E22 on train_v5 did not improve chrF; predictions archived (E27). Known clean dasagirq/wikisource candidates rechecked with no new non-leaking pairs. Repo experiments log: `reports/experiments.md`.
