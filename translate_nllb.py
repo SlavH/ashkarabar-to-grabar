@@ -47,8 +47,8 @@ def load_model(adapter_dir: Path = ADAPTER_DIR, device: str | None = None):
 
 def translate(model, tokenizer, text: str, device: str = "cpu",
               num_beams: int = 4, max_new_tokens: int = MAX_LEN,
-              min_new_tokens: int = 20, length_penalty: float = 1.05,
-              repetition_penalty: float = 1.25, no_repeat_ngram_size: int = 0) -> str:
+              min_new_tokens: int = 20, length_penalty: float = 1.07,
+              repetition_penalty: float = 1.22, no_repeat_ngram_size: int = 0) -> str:
     import torch
 
     tokenizer.src_lang = SRC_LANG

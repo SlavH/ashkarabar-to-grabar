@@ -36,5 +36,5 @@ Baseline (adopted): **v9** — chrF 53.84 / BLEU 22.86, n=108 test (frozen). Con
 | E21-v26 | lower LR on v5 | v9 config on train_v5, lr=1.5e-4, 30 epochs, tuned decode | v5 | 53.25 / 21.61 | rejected (chrF < 55.30) |
 | E22-v27 | different seed on v5 | v9 config on train_v5, seed=999, 30 epochs, tuned decode | v5 | 54.95 / 24.47 | rejected (chrF < 55.30) |
 | E23-decode6 | decoding search 6 | max_new/beams/lp grid (nr=0,mn=20,rp=1.4) on v9 | - | 55.30 / 25.38 (tied, nb=4,mx=256,lp=1.05) | no improvement; defaults unchanged |
-| E24-decode7 | decoding search 7 | repetition_penalty grid (nr=0,mn=20,nb=4,lp=1.05) on v9 | - | **55.37 / 25.42** (rp=1.25) | **adopted as inference default** (adapter unchanged) |
-| E25-decode8 | decoding search 8 | fine rp/mn/lp grid around best (nr=0,nb=4) on v9 | - | running | - |
+| E24-decode7 | decoding search 7 | repetition_penalty grid (nr=0,mn=20,nb=4,lp=1.05) on v9 | - | 55.37 / 25.42 (rp=1.25) | adopted then superseded by E25 |
+| E25-decode8 | decoding search 8 | fine rp/mn/lp grid around best (nr=0,nb=4) on v9 | - | **55.41 / 25.58** (rp=1.22,mn=20,lp=1.07) | **adopted as inference default** (adapter unchanged) |
