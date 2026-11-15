@@ -5,6 +5,7 @@
 - **Frozen test:** `data/test_real.tsv`, n=108 (ashkharabar → grabar)
 - **Scores:** **chrF 55.41 / BLEU 25.58** (confirmed, E27)
 - **Predictions:** `reports/preds_test_best_e27.jsonl`
+- **Sentence-level chrF scores:** `reports/preds_test_best_e27_scored.jsonl` (sorted by chrF; mean sent-chrF 54.88, 4 items <30 incl. #107/#49 misalignments and #14/#13 true errors)
 - **Per-example auto-tags:** `reports/test_error_tags_e27.tsv` (heuristic; not expert gold labels)
 
 ## Heuristic tag distribution (per example, multi-label)
