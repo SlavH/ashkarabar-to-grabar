@@ -42,4 +42,4 @@ Baseline (adopted): **v9** — chrF 53.84 / BLEU 22.86, n=108 test (frozen). Con
 | E27-export-preds | analysis | export 108 test predictions with current best decode (nr=0,mn=20,nb=4,lp=1.07,rp=1.22) | - | 55.41 / 25.58 | archived `reports/preds_test_best_e27.jsonl` (108 items) |
 | E28-v28 | train_v5 + label smoothing | v9 config on train_v5, seed=42, 30 ep, label_smoothing=0.1, best decode eval | v5 | error | failed with decoder_input_ids/decoder_inputs_embeds conflict (env) |
 | E28b-v28b | train_v5 | v9 config on train_v5, seed=123, 30 ep, use_cache=False fix, best decode eval | v5 | 54.40 / 24.47 | rejected (chrF < 55.41); adapter unchanged |
-| E29-decode10 | decoding search 10 | wider beams/lp/mn grid (nr=0,rp=1.22) on v9 | - | running | - |
+| E29-decode10 | decoding search 10 | wider beams/lp/mn grid (nr=0,rp=1.22) on v9 | - | 55.41 / 25.58 (tied, nb=4,lp=1.07,mn=20) | no improvement; defaults unchanged |
