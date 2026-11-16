@@ -12,11 +12,12 @@ Evidence: `reports/preds_test_best_e27.jsonl`, `reports/test_error_analysis_e27.
   - GRB (gold): «Յորժամ վերանայր ամպն ի խորանէ անտի, չուէին որդիքն Իսրայէլի հանդերձ ամենայն աղխիւ իւրեանց:»
 - **Observation:** MOD expresses Exod 40:35-like content (Moses could not enter because the cloud/glory filled the tabernacle). Gold GRB expresses Exod 40:36-like content (when the cloud lifted, Israel journeyed) — different verse.
 - **Model (E27 best decode):** «Եւ ոչ կարէր Մովսէս մտանել ի խորանն վկայութեան. քանզի ծածկէր զնա ամպն. եւ լցաւ խորանն փառօք Տեառն:» — tracks the MOD/source meaning.
-- **Context in `data/parallel_real.tsv` (2723–2727):** appears to be a grabar-column shift in this block:
-  - 2724 MOD «Ամպը ծածկեց վկայութեան խորանը, եւ խորանը լցուեց Տիրոջ փառքով:» ↔ GRB «Եւ ո՛չ կարէր Մովսէս մտանել ի խորանն վկայութեան, զի ծածկեաց զնա ամպն, եւ լի՛ եղեւ խորանն փառօք Տեառն:» (GRB matches 2724/2725 MOD content)
-  - 2725 MOD «Մովսէսը չէր կարողանում մտնել վկայութեան խորան…» ↔ GRB «Յորժամ վերանայր ամպն…» (GRB matches 2726 MOD content)
-  - 2726 MOD «Երբ ամպը վերանում էր…» ↔ GRB «Եւ եթէ ո՛չ վերանայր ամպն…» etc.
-- **Suggested action (if approved):** reconstruct correct MOD↔GRB alignment for this Exod 40 block against Zohrab/modern verse boundaries, update `parallel_real.tsv`, regenerate splits ensuring `test_real.tsv` comparability is handled explicitly (or version the test). Do **not** change silently.
+- **Context/evidence (`data/parallel_real.tsv` 2724–2726 and `data/wikisource/exodus.grabar.txt` Exod 40:34–36):** grabar column appears shifted in this block:
+  - 2724 MOD «Ամպը ծածկեց վկայութեան խորանը, եւ խորանը լցուեց Տիրոջ փառքով:» (40:34) ↔ current GRB «Եւ ո՛չ կարէր Մովսէս մտանել ի խորանն վկայութեան, զի ծածկեաց զնա ամպն, եւ լի՛ եղեւ խորանն փառօք Տեառն:» (Zohrab 40:35 sense)
+  - 2725 MOD «Մովսէսը չէր կարողանում մտնել վկայութեան խորան…» (40:35) ↔ current GRB «Յորժամ վերանայր ամպն ի խորանէ անտի, չուէին որդիքն Իսրայէլի…» (Zohrab 40:36 sense) — **test item**
+  - 2726 MOD «Երբ ամպը վերանում էր…» (40:36) ↔ current GRB «Եւ եթէ ո՛չ վերանայր ամպն՝ ո՛չ չուէին…» (Zohrab 40:37 sense)
+- **Likely correction for #49 (review only):** pair 2725 MOD with 2724’s current GRB («Եւ ո՛չ կարէր Մովսէս մտանել ի խորանն վկայութեան, զի ծածկեաց զնա ամպն, եւ լի՛ եղեւ խորանն փառօք Տեառն:»), and realign the surrounding block consistently against verse boundaries.
+- **Suggested action (if approved):** reconstruct correct MOD↔GRB alignment for this Exod 40 block, update `parallel_real.tsv`, regenerate splits with explicit handling/versioning of the frozen test. Do **not** change silently.
 
 ## 2) Test item #107 — likely block misalignment (Exod 28/39 breastpiece rows)
 
