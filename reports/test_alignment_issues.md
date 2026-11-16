@@ -19,7 +19,7 @@ Evidence: `reports/preds_test_best_e27.jsonl`, `reports/test_error_analysis_e27.
 - **Likely correction for #49 (review only):** pair 2725 MOD with 2724’s current GRB («Եւ ո՛չ կարէր Մովսէս մտանել ի խորանն վկայութեան, զի ծածկեաց զնա ամպն, եւ լի՛ եղեւ խորանն փառօք Տեառն:»), and realign the surrounding block consistently against verse boundaries.
 - **Suggested action (if approved):** reconstruct correct MOD↔GRB alignment for this Exod 40 block, update `parallel_real.tsv`, regenerate splits with explicit handling/versioning of the frozen test. Do **not** change silently.
 
-## 2) Test item #107 — likely block misalignment (Exod 28/39 breastpiece rows)
+## 2) Test item #107 — likely block misalignment (Exod 28 breastpiece rows)
 
 - **Location:** `data/test_real.tsv:107` = `data/parallel_real.tsv:2298`
 - **Current pair:**
@@ -27,9 +27,12 @@ Evidence: `reports/preds_test_best_e27.jsonl`, `reports/test_error_analysis_e27.
   - GRB (gold): «եւ Կարգն երկրորդ՝ կարկեհան, եւ շափիղա, եւ յասպիս:» (second row)
 - **Observation:** MOD describes the first row of stones; gold is the second row.
 - **Model (E27 best decode):** «Եւ դիցես ի վերայ նորա ականսն ի չորս շարս ընդելուզեալս. ա՛յսպէս լինիցին շարք ականցն. զառաջինն զմրուխտ, եւ սարդիոն, եւ տպազիոն, շար մի:» — follows source/first row.
-- **Context in `data/parallel_real.tsv` (2296–2302):** grabar appears shifted relative to modern by ~1 line in this block:
-  - 2297 GRB gives first row («Առաջին՝ զըմրուխտ, եւ սարդիոն, եւ տպազիոն…») while 2297 MOD is about the square dimensions; 2298 MOD states the first row but 2298 GRB gives the second row, etc.
-- **Suggested action (if approved):** re-align this breastpiece stone-rows block against verse/source text (Zohrab Exod 28:17–20 / 39:10–13 parallels), then rebuild splits with explicit handling of frozen-test comparability.
+- **Context/evidence (`data/parallel_real.tsv` 2297–2300 and `data/wikisource/exodus.grabar.txt` Exod 28:17–20):** grabar appears shifted relative to modern in this block:
+  - 2297 GRB: «Եւ ընդելուզցե՛ս ի նմա ընդելուզածս, ըստ չորեքկարգեա՛ն ականց: Կարգս ականց, Առաջին՝ զըմրուխտ, եւ սարդիոն, եւ տպազիոն. կարգ մի:» (first row, 28:17) — matches 2298 MOD’s content
+  - 2298 GRB: «եւ Կարգն երկրորդ՝ կարկեհան, եւ շափիղա, եւ յասպիս:» (28:18) — matches 2299 MOD (“Երկրորդ շարքը…”)
+  - 2299 GRB: third row (28:19) — matches 2300 MOD, etc.
+- **Likely correction for #107 (review only):** pair 2298 MOD with 2297’s current GRB (first row) and realign the surrounding block consistently against verse boundaries.
+- **Suggested action (if approved):** re-align this stone-rows block against Zohrab Exod 28:17–20 (and corresponding modern verse segmentation), update `parallel_real.tsv`, regenerate splits with explicit handling/versioning of the frozen test. Do **not** change silently.
 
 ## Notes
 - A systematic chargram-overlap scan of all 108 test predictions flagged only #49 and #107 as strong misalignment outliers (very low pred–ref, much higher src–pred).
